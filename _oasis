@@ -9,6 +9,13 @@ OASISFormat: 0.4
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
 
+Executable "quicktest"
+  Path: tests/ 
+  MainIs: quicktest.ml
+  CompiledObject: best
+  BuildDepends:
+    cmdliner
+
 Library "rossa"
   Path: lib/
   Modules: 
