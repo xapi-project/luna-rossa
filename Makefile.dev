@@ -1,0 +1,52 @@
+# vim: set filetype=make ts=8 sw=8 noet:
+#
+# This is a manually maintained Makefile in contrast to
+# the automatically generated one by Oasis. It's safe to
+# ignore it.
+#
+
+# -- global tags, local tags are in _tags
+TAG += 		-tag annot
+TAG += 		-tag bin_annot
+
+PKG +=		-pkg xen-api-client.lwt
+PKG +=		-pkg yojson
+PKG +=		-pkg cmdliner
+
+SRC += 		-I lib
+SRC += 		-I tests
+
+AUTOGEN +=	Makefile
+AUTOGEN += 	_tags
+AUTOGEN += 	configure
+AUTOGEN += 	lib/META
+AUTOGEN += 	lib/rossa.mldylib
+AUTOGEN += 	lib/rossa.mllib
+AUTOGEN += 	myocamlbuild.ml
+AUTOGEN += 	setup.data
+AUTOGEN += 	setup.log
+AUTOGEN += 	setup.ml
+
+# -- the targets
+
+TARGETS += 	quicktest.native
+
+OCB_FLAGS 	= -use-ocamlfind $(TAG) $(PKG) $(SRC)
+OCB 		= ocamlbuild $(OCB_FLAGS)
+
+all:
+		$(OCB) $(TARGETS)
+
+setup:
+		oasis setup
+
+clean:
+		$(OCB) -clean
+		rm -f $(AUTOGEN) 
+
+# -- generic pattern - just passed to OCB
+%:		
+		$(OCB) $*
+
+.PHONY: all clean 
+
