@@ -9,9 +9,10 @@ framework for testing Xen Server. It's main ideas are:
 
 * Luna Rossa doesn't deal with provisioning the test environment.
   Instead, it reads the _inventory_ of machines that tests can use from
-  an `inventory.json` file, that describes. In particular, Rossa does
+  an `inventory.json` file, that describes it. In particular, Rossa does
   not know by itself about machine names, accounts, and other details
-  about ther servers where tests are executed.
+  about ther servers where tests are executed but learns about them from
+  the `inventory.json` file.
 
 This is work in progress.
 
@@ -21,6 +22,7 @@ Luna Rossa is implemented in OCaml. OCaml's package manager Opam is
 essential for building Luna Rossa.
 
     $ opam install xen-api-client yojson
+    $ opam install oasis
 
 # Building
 
