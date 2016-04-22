@@ -1,24 +1,14 @@
-{ "testarossa": "0.1",
+{ "version": "0.1",
   
   "servers": [
     {
-      "name": "host1",
-      "ssh": ["vagrant", "ssh", "host1", "-c"],
+      "name": "dt87",
+      "ssh": ["ssh", "root@dt87"],
       "xen": {
-        "api": "http://192.168.100.1",
+        "api": "http://dt87",
         "user": "root",
         "password": "xenserver"
       }
-
     },
-    {
-      "name": "host2",
-      "ssh": ["vagrant", "ssh", "host2", "-c"],
-      "xen": {
-        "api": "http://192.168.100.2",
-        "user": "root",
-        "password": "xenserver"
-      }
-    }
   ]
 }
