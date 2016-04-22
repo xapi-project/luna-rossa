@@ -11,8 +11,19 @@
         "api": "http://dt87",
         "user": "root",
         "password": "xenserver",
-        "quicktest": "/tmp/quicktestbin.opt"
       }
+    }
+  ],
+  "tests": [
+    {
+      "name": "quicktest",
+      "host": "dt87",
+      "path": "/tmp/quicktestbin.opt"
+    },
+    {
+      "name": "powercycle",
+      "host": "dt87",
+      "vm":   "xen-test-vm-0-0-5"
     }
   ]
 }

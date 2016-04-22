@@ -33,8 +33,7 @@ let json t = t.json
  * better wa here.
  *)
 
-let ssh  t cmd = 
-  String.concat " " (t.ssh @ [cmd])
+let ssh  t cmd = String.concat " " (t.ssh @ [cmd])
 
 (** parse a server object fron the JSON inventory *)
 let server json =
@@ -55,20 +54,7 @@ let server json =
 
 (** [inventory filename] reads the inventory into a [t list] value
  *)
-let inventory filename = 
-    Y.from_file filename 
-    |> U.member "servers" 
-    |> U.to_list
-    |> List.map server 
-
-
-(* code for some testing *)
-let main () =
-    let argv    = Array.to_list Sys.argv in
-    let this    = Filename.basename (List.hd argv) in
-    let args    = List.tl argv in
-      match args with
-      | [file]  -> ignore (inventory file)
-      | _       -> fail "%s expects one file name as argument" this
+let make json = 
+  json |> U.to_list |> List.map server 
 
 

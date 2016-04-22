@@ -23,7 +23,8 @@ Library "rossa"
     Yorick,
     Rossa_util,
     Rossa_server,
-    Rossa_xen
+    Rossa_xen,
+    Rossa_config
   Findlibname: rossa
   BuildDepends:   
     xen-api-client.lwt,

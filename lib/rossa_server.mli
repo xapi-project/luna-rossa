@@ -12,13 +12,11 @@ type user =
 
 type t (* a Xen Server *)
 
-val inventory : string -> t list
-(** [inventory "file.json"] reads the inventory of available servers
-  * from file.json 
-  *)
+val make : Yojson.Basic.json -> t list
+(** [make] creates a list of servers from a JSON array *)
 
 val name :  t -> string 
-(** unique within the servers available *)
+(** name of a server, it should be unique within a config file *)
 
 val root :  t -> user 
 (** credentials to access the Xen API on the server *)
@@ -34,5 +32,5 @@ val api :   t -> api
 (** URI for the Xen API on this server *)
 
 val json:   t -> Yojson.Basic.json
-(** JSON record for [t] from the inventory description. This can be used
+(** JSON record for [t] from the configuraion description. This can be used
  * to pass additional information to tests. *)
