@@ -10,7 +10,7 @@ type user =
   ; password : string 
   }
 
-type t (* A Xen Server *)
+type t (* a Xen Server *)
 
 val inventory : string -> t list
 (** [inventory "file.json"] reads the inventory of available servers
@@ -23,8 +23,12 @@ val name :  t -> string
 val root :  t -> user 
 (** credentials to access the Xen API on the server *)
 
-val ssh :   t -> string list
-(** Execute a shell command on the server *)
+val ssh :   t -> string -> string
+(** [ssh t cmd] return a shell command as a string. Executing the shell
+ * command locally leads to the execution of [cmd] on [t]. 
+ * Caveat: this is fragile because of quoting issues and we need a
+ * better wa here.
+ *)
 
 val api :   t -> api
 (** URI for the Xen API on this server *)

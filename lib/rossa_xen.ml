@@ -29,20 +29,30 @@ type api      = Rossa_server.api    (* API end point *)
 (** [fail msg] makes a thread fail with a printf-style [msg] *) 
 let fail fmt = Printf.kprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
 
+(** [is_template vm] is true, iff [vm] is a template *)
+let is_template = function 
+  | _, { API.vM_is_a_template = true; _} -> true
+  | _, _ -> false
+
+(** [has_name name vm] is true, iff [vm] has [name] *)
+let has_name name = function 
+  | _, { API.vM_name_label = n ; _} when name = n -> true
+  | _, _ -> false
+  
+(** [select vms rpc session p] returns all VMs matching [p] *)
+let select_vms rpc session p =
+  VM.get_all_records rpc session >>= fun vms ->
+    return (List.filter p vms)
+
 (** [find_template rpc session name] returns the first template
- * that has name [name] or fails with [Failure msg]
+ * that has name [name] or [None].
  *)
 let find_template rpc session ~name =
-  VM.get_all_records rpc session >>= fun vms ->
-  let is_template = function
-    | _,  { API.vM_name_label    = name
-          ; API.vM_is_a_template = true 
-          } -> true
-    | _, _ -> false 
-  in 
-    match List.filter is_template vms with
-    | []          -> fail "No template named '%s' found" name
-    | (x,_) :: _  -> return x
+  select_vms rpc session (fun vm -> is_template vm && has_name name vm) >>= 
+    ( function
+    | (_, x)::_ -> return (Some x)
+    | []        -> return None
+    )
 
 (** [create_mirage_vm] creates a mirage VM from a suitable template
  *)

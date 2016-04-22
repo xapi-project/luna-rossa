@@ -24,7 +24,15 @@ type t =
 let name t = t.name
 let api  t = t.api
 let root t = t.root
-let ssh  t = t.ssh
+
+(** [ssh t cmd] return a shell command as a string. Executing the shell
+ * command locally leads to the execution of [cmd] on [t]. 
+ * Caveat: this is fragile because of quoting issues and we need a
+ * better wa here.
+ *)
+
+let ssh  t cmd = 
+  String.concat " " (t.ssh @ [cmd])
 
 (** parse a server object fron the JSON inventory *)
 let server json =
