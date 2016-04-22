@@ -33,3 +33,6 @@ val ssh :   t -> string -> string
 val api :   t -> api
 (** URI for the Xen API on this server *)
 
+val json:   t -> Yojson.Basic.json
+(** JSON record for [t] from the inventory description. This can be used
+ * to pass additional information to tests. *)

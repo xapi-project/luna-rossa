@@ -1,14 +1,18 @@
-{ "version": "0.1",
-  
+{
+  "version": "0.1",
   "servers": [
     {
       "name": "dt87",
-      "ssh": ["ssh", "root@dt87"],
+      "ssh": [
+        "ssh",
+        "root@dt87"
+      ],
       "xen": {
         "api": "http://dt87",
         "user": "root",
-        "password": "xenserver"
+        "password": "xenserver",
+        "quicktest": "/tmp/quicktestbin.opt"
       }
-    },
+    }
   ]
 }

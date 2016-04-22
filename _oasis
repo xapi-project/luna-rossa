@@ -14,7 +14,8 @@ Executable "quicktest"
   MainIs: quicktest.ml
   CompiledObject: best
   BuildDepends:
-    cmdliner
+    cmdliner,
+    rossa
 
 Library "rossa"
   Path: lib/

@@ -19,11 +19,13 @@ type t =
   ; ssh:    string list
   ; api:    string
   ; root:   user
+  ; json:   Y.json
   }
 
 let name t = t.name
 let api  t = t.api
 let root t = t.root
+let json t = t.json
 
 (** [ssh t cmd] return a shell command as a string. Executing the shell
  * command locally leads to the execution of [cmd] on [t]. 
@@ -43,8 +45,9 @@ let server json =
   let user = xen  |> U.member "user"|> U.to_string in
   let pw   = xen  |> U.member "password" |> U.to_string in
     { name = name
-    ; ssh = ssh
-    ; api = api
+    ; ssh  = ssh
+    ; api  = api
+    ; json = json
     ; root =  { username = user
               ; password = pw
               }
