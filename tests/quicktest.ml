@@ -42,18 +42,27 @@ let main file_json hostname =
 
 let json_arg =
   let doc = "JSON file describing server inventory" in
-  CMD.Arg.(value & pos 0 file "inventory.json" & info [] ~docv:"INVENTORY" ~doc)
+  CMD.Arg.(required 
+    & pos 0 (some file) None 
+    & info [] ~docv:"INVENTORY" ~doc)
  
 let name_arg =
   let doc = "Name of server in the inventory where quicktest is executed" in
-  CMD.Arg.(value & pos 1 string "" & info [] ~docv:"NAME" ~doc)
-
+  CMD.Arg.(required 
+    & pos 1 (some string) None 
+    & info [] ~docv:"NAME" ~doc)
     
 let main_t = CMD.Term.(const main $ json_arg $ name_arg)
 
 let info =
   let doc = "Run quicktest on a Xen Server" in
-  let man = [ `S "BUGS"; `P "Report bug on the github issue tracker" ] in
+  let man = 
+    [ `S "DESCRIPTION"
+    ; `P "Run the on-board quicktest test suite on a server."
+    ; `S "BUGS"
+    ; `P "Report bug on the github issue tracker" 
+    ] 
+  in
   CMD.Term.info "quicktest" ~version:"1.0" ~doc ~man
     
 let () = 
