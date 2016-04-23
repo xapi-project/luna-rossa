@@ -24,7 +24,7 @@ let main config_file  =
     let config    = C.read config_file in 
     let config'   = config.C.test "quicktest" in
     let hostname  = config' |> U.member "host" |> U.to_string in
-    let qt =      = config' |> U.member "path" |> U.to_string in
+    let qt        = config' |> U.member "path" |> U.to_string in
     let host      = find_host hostname config.C.servers in
     let open Yorick in
       match !?* (?|>) "%s" (S.ssh host qt) with
