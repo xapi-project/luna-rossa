@@ -10,7 +10,7 @@
       "xen": {
         "api": "http://dt87",
         "user": "root",
-        "password": "xenserver",
+        "password": "xenserver"
       }
     }
   ],
