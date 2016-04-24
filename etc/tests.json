@@ -1,0 +1,15 @@
+{
+  "version": "0.1",
+  "tests": [
+    {
+      "name": "quicktest",
+      "server": "host1",
+      "path": "/tmp/quicktestbin.opt"
+    },
+    {
+      "name": "powercycle",
+      "server": "host1",
+      "vm": "xen-test-vm-0-0-5"
+    }
+  ]
+}

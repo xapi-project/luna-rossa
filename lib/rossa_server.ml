@@ -27,7 +27,7 @@ let api  t = t.api
 let root t = t.root
 let json t = t.json
 
-(** [ssh t cmd] return a shell command as a string. Executing the shell
+(** [ssh t cmd] returns a shell command as a string. Executing the shell
  * command locally leads to the execution of [cmd] on [t]. 
  * Caveat: this is fragile because of quoting issues and we need a
  * better wa here.
@@ -35,7 +35,7 @@ let json t = t.json
 
 let ssh  t cmd = String.concat " " (t.ssh @ [cmd])
 
-(** parse a server object fron the JSON inventory *)
+(** parse a server object from the JSON inventory *)
 let server json =
   let name = json |> U.member "name"|> U.to_string  in
   let ssh  = json |> U.member "ssh" |> U.to_list |> List.map U.to_string in
@@ -52,9 +52,16 @@ let server json =
               }
     }
 
-(** [inventory filename] reads the inventory into a [t list] value
- *)
-let make json = 
-  json |> U.to_list |> List.map server 
+(** [read file_json] reads the server configuration from a JSON file
+  * and returns them as a [t list] value.
+  *)
+let read file_json =
+  Y.from_file file_json 
+  |> U.member "servers" 
+  |> U.to_list 
+  |> List.map server 
 
 
+(** [find name ts] finds a server by name in a list of servers
+  *)
+let find name ts = List.find (fun t -> t.name = name) ts 

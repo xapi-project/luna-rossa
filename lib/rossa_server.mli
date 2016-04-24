@@ -12,8 +12,14 @@ type user =
 
 type t (* a Xen Server *)
 
-val make : Yojson.Basic.json -> t list
-(** [make] creates a list of servers from a JSON array *)
+val read: string -> t list
+(** [read servers_json] read a file [servers_json] that describes 
+		a set of servers that are available for testing *)
+
+val find: string -> t list -> t (* Not_found *)
+(** [find name ts] finds a server by name in a list of servers or raise
+		[Not_found] *)
+
 
 val name :  t -> string 
 (** name of a server, it should be unique within a config file *)
@@ -31,6 +37,4 @@ val ssh :   t -> string -> string
 val api :   t -> api
 (** URI for the Xen API on this server *)
 
-val json:   t -> Yojson.Basic.json
-(** JSON record for [t] from the configuraion description. This can be used
- * to pass additional information to tests. *)
+

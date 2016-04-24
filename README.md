@@ -1,20 +1,25 @@
 
 # Luna Rossa - A Framework for Testing Xen Server
 
-This is the prototype of a test framework inspired by Testarossa, another
-framework for testing Xen Server. It's main ideas are:
+This is the evolution of the Testarossa framework for testing Xen
+Server. The main new ideas are:
 
 * Luna Rossa provides a library for writing tests. Each module in the
   library is guarded by an interface.
 
-* Luna Rossa doesn't deal with provisioning the test environment.
+* Luna Rossa doesn't deal with provisioning the test environment. 
   Instead, it reads the _inventory_ of machines that tests can use from
-  an `inventory.json` file, that describes it. In particular, Rossa does
+  an `servers.json` file, that describes it. In particular, Rossa does
   not know by itself about machine names, accounts, and other details
   about ther servers where tests are executed but learns about them from
-  the `inventory.json` file.
+  the `servers.json` file. See the `etc/` directory.
 
-This is work in progress.
+* Luna Rosa tries to make configuarations for tests explicit by reading
+  them from a JSON file `tests.json`. See the `etc/` directory.
+
+* We give up OCamlScript in favor of pure OCaml and gain one less
+  dependency, mroe type safety and support from types in the editor
+  during development.
 
 # Build Dependencies
 
