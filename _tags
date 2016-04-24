@@ -1,0 +1,30 @@
+# OASIS_START
+# DO NOT EDIT (digest: 334a2cd6cd49b91b3f03b93de94af4bd)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+true: annot, bin_annot
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library rossa
+"lib/rossa.cmxs": use_rossa
+<lib/*.ml{,i,y}>: pkg_xen-api-client.lwt
+<lib/*.ml{,i,y}>: pkg_yojson
+# Executable quicktest
+<tests/quicktest.{native,byte}>: pkg_cmdliner
+<tests/quicktest.{native,byte}>: pkg_xen-api-client.lwt
+<tests/quicktest.{native,byte}>: pkg_yojson
+<tests/quicktest.{native,byte}>: use_rossa
+<tests/*.ml{,i,y}>: pkg_cmdliner
+<tests/*.ml{,i,y}>: pkg_xen-api-client.lwt
+<tests/*.ml{,i,y}>: pkg_yojson
+<tests/*.ml{,i,y}>: use_rossa
+# OASIS_STOP

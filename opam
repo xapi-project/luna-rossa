@@ -1,0 +1,20 @@
+opam-version: "1.2"
+name: "luna-rossa"
+version: "0.1"
+maintainer: "Christian Lindig <christian.lindig@citrix.com>"
+authors: "Christian Lindig <christian.lindig@citrix.com>"
+homepage: "https://github.com/lindig/luna-rossa"
+bug-reports: "https://github.com/lindig/luna-rossa"
+license: "MIT"
+dev-repo: "https://github.com/lindig/luna-rossa"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "luna-rossa"]
+depends: [
+  "ocamlfind" 
+  "xen-api-client" 
+  "yojson"
+]
