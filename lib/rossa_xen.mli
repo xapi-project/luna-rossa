@@ -10,7 +10,8 @@ val with_session : api -> user -> (rpc -> string -> 'a Lwt.t) -> 'a Lwt.t
   * closed afterwards. The result is the one returned by [f].
   *)
 
-val find_template : rpc -> session -> name: string -> API.vM_t option Lwt.t
+val find_template : rpc -> session -> name: string 
+  -> (string * API.vM_t) option Lwt.t
 (** [find_template rpc session name] returns the first template
   * that has name [name].
   *)

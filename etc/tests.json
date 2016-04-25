@@ -9,7 +9,7 @@
     {
       "name": "powercycle",
       "server": "host1",
-      "vm": "xen-test-vm-0-0-5"
+      "vm": "minion"
     }
   ]
 }

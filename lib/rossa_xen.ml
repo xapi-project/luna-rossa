@@ -50,15 +50,15 @@ let select_vms rpc session p =
 let find_template rpc session ~name =
   select_vms rpc session (fun vm -> is_template vm && has_name name vm) >>= 
     ( function
-    | (_, x)::_ -> return (Some x)
-    | []        -> return None
+    | x::_    -> return (Some x)
+    | []      -> return None
     )
 
 (** [create_mirage_vm] creates a mirage VM from a suitable template
  *)
 let create_mirage_vm rpc session ~template =
   let meg32 = Rossa_util.meg 32 in
-  VM.clone rpc session template "mirage" >>= fun vm ->
+  VM.clone rpc session template "rossa" >>= fun vm ->
   VM.provision rpc session vm >>= fun _ ->
   (* VM.set_PV_kernel rpc session vm path_to_kernel >>= fun () -> *)
   VM.set_HVM_boot_policy rpc session vm "" >>= fun () ->

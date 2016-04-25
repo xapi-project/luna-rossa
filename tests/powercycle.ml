@@ -5,6 +5,10 @@ module S      = Rossa_server
 module C      = Rossa_config
 module X      = Rossa_xen
 module CMD    = Cmdliner
+module VM     = Xen_api_lwt_unix.VM
+
+let return = Xen_api_lwt_unix.return
+let (>>=)  = Xen_api_lwt_unix.(>>=)
 
 let printf    = Printf.printf
 let sprintf   = Printf.sprintf
@@ -19,7 +23,33 @@ let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
 
-let thread vm rpc session =
+let meg32 = Rossa_util.meg 32
+
+let log fmt =
+  Printf.kprintf (fun msg -> Lwt.return (print_endline @@ "# "^msg)) fmt
+
+let fail fmt = Printf.kprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
+
+let find_template rpc session name =
+  X.find_template rpc session name >>= function
+    | Some t -> return t
+    | None   -> fail "can't find template %s" name
+
+let thread template rpc session =
+  let clone = "rossa-mirage-vm" in
+  find_template rpc session template >>= fun (t,_) ->
+  log "found template %s" template >>= fun () ->
+  VM.clone rpc session t clone >>= fun vm ->
+  VM.provision rpc session vm >>= fun _ ->
+  VM.set_memory_limits 
+    ~rpc 
+    ~session_id:session 
+    ~self:vm 
+    ~static_min:meg32 
+    ~static_max:meg32 
+    ~dynamic_min:meg32 
+    ~dynamic_max:meg32 >>= fun () ->
+  log "cloned '%s' to '%s'" template clone >>= fun () ->
   Lwt.return ()
 
 (* [main] is the heart of this test *)
