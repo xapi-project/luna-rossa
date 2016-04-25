@@ -8,17 +8,17 @@ Server. The main new ideas are:
   library is guarded by an interface.
 
 * Luna Rossa doesn't deal with provisioning the test environment. 
-  Instead, it reads the _inventory_ of machines that tests can use from
-  an `servers.json` file, that describes it. In particular, Rossa does
-  not know by itself about machine names, accounts, and other details
-  about ther servers where tests are executed but learns about them from
-  the `servers.json` file. See the `etc/` directory.
+  Instead, it reads the inventory of machines that tests can use from
+  an `servers.json` file, that describes it. In particular, Luna Rossa
+  does not know by itself about machine names, accounts, and other
+  details about the servers where tests are executed but learns about
+  them from the `servers.json` file. See the `etc/` directory.
 
 * Luna Rosa tries to make configuarations for tests explicit by reading
   them from a JSON file `tests.json`. See the `etc/` directory.
 
 * We give up OCamlScript in favor of pure OCaml and gain one less
-  dependency, mroe type safety and support from types in the editor
+  dependency, more type safety and support from types in the editor
   during development.
 
 # Build Dependencies
