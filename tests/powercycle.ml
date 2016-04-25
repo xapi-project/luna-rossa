@@ -22,14 +22,11 @@ let find name servers =
 let log fmt =
   Printf.kprintf (fun msg -> Lwt.return (print_endline @@ "# "^msg)) fmt
 
-(** [fail fmt] makes a thread fail with a printf-style message *)
-let fail fmt = Printf.kprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
-
 (** [finf_template] finds a template by [name] *)
 let find_template rpc session name =
   X.find_template rpc session name >>= function
     | Some t -> return t
-    | None   -> fail "can't find template %s" name
+    | None   -> X.fail "can't find template %s" name
 
 let powercycle template rpc session =
   let clone = "rossa-mirage-vm" in

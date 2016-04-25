@@ -27,7 +27,7 @@ type api      = Rossa_server.api    (* API end point *)
 
 
 (** [fail msg] makes a thread fail with a printf-style [msg] *) 
-let fail fmt = Printf.kprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
+let fail fmt = Printf.ksprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
 
 (** [is_template vm] is true, iff [vm] is a template *)
 let is_template = function 
