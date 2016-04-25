@@ -7,13 +7,8 @@ module X      = Rossa_xen
 module CMD    = Cmdliner
 module VM     = Xen_api_lwt_unix.VM
 
-let return = Xen_api_lwt_unix.return
-let (>>=)  = Xen_api_lwt_unix.(>>=)
-
-let printf    = Printf.printf
-let sprintf   = Printf.sprintf
-let fprintf   = Printf.fprintf
-let eprintf   = Printf.eprintf
+let return    = Xen_api_lwt_unix.return
+let (>>=)     = Xen_api_lwt_unix.(>>=)
 
 exception Error of string
 let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
@@ -23,20 +18,22 @@ let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
 
-let meg32 = Rossa_util.meg 32
-
+(** [log fmt] emit printf-style log message from a thread to stdout *)
 let log fmt =
   Printf.kprintf (fun msg -> Lwt.return (print_endline @@ "# "^msg)) fmt
 
+(** [fail fmt] makes a thread fail with a printf-style message *)
 let fail fmt = Printf.kprintf (fun msg -> Lwt.fail (Failure msg)) fmt 
 
+(** [finf_template] finds a template by [name] *)
 let find_template rpc session name =
   X.find_template rpc session name >>= function
     | Some t -> return t
     | None   -> fail "can't find template %s" name
 
-let thread template rpc session =
+let powercycle template rpc session =
   let clone = "rossa-mirage-vm" in
+  let meg32 = Rossa_util.meg 32 in
   find_template rpc session template >>= fun (t,_) ->
   log "found template %s" template >>= fun () ->
   VM.clone rpc session t clone >>= fun vm ->
@@ -50,6 +47,17 @@ let thread template rpc session =
     ~dynamic_min:meg32 
     ~dynamic_max:meg32 >>= fun () ->
   log "cloned '%s' to '%s'" template clone >>= fun () ->
+  VM.start rpc session vm false false >>= fun () -> 
+  log "VM started" >>= fun () ->
+  (* VM.suspend rpc session vm >>= fun () ->
+   * log "VM suspended" >>= fun () ->
+   * VM.resume rpc session vm true true >>= fun () ->
+   * log "VM resumed" >>= fun () ->
+   *)
+  VM.clean_shutdown rpc session vm >>= fun () ->
+  log "VM shut down" >>= fun () ->
+  VM.destroy rpc session vm >>= fun () ->
+  log "VM destroyed" >>= fun () ->
   Lwt.return ()
 
 (* [main] is the heart of this test *)
@@ -57,11 +65,11 @@ let main servers_json config_json  =
   let servers   = S.read servers_json in
   let config    = C.read config_json "powercycle" in 
   let hostname  = config |> U.member "server" |> U.to_string in
-  let vm        = config |> U.member "vm" |> U.to_string in
+  let template  = config |> U.member "vm" |> U.to_string in
   let server    = find hostname servers in
   let api       = S.api server in
   let root      = S.root server in
-    Lwt_main.run (X.with_session api root (thread vm))
+    Lwt_main.run (X.with_session api root (powercycle template))
 
 let servers =
   let doc = "JSON file describing Xen Servers available for testing." in

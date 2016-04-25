@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: fc35aacf846e3c9c726f31f36c696ebf)
+# DO NOT EDIT (digest: d2c522d5e75deed0ea518d260685fbc2)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -19,10 +19,12 @@ true: annot, bin_annot
 <lib/*.ml{,i,y}>: pkg_xen-api-client.lwt
 <lib/*.ml{,i,y}>: pkg_yojson
 # Executable powercycle
+<tests/powercycle.{native,byte}>: pkg_
 <tests/powercycle.{native,byte}>: pkg_cmdliner
 <tests/powercycle.{native,byte}>: pkg_xen-api-client.lwt
 <tests/powercycle.{native,byte}>: pkg_yojson
 <tests/powercycle.{native,byte}>: use_rossa
+<tests/*.ml{,i,y}>: pkg_
 # Executable quicktest
 <tests/quicktest.{native,byte}>: pkg_cmdliner
 <tests/quicktest.{native,byte}>: pkg_xen-api-client.lwt
