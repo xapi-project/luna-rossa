@@ -17,6 +17,15 @@ Executable "quicktest"
     cmdliner,
     rossa
 
+Executable "powercycle"
+  Path: tests/ 
+  MainIs: powercycle.ml
+  CompiledObject: best
+  BuildDepends:
+    cmdliner,
+    rossa
+
+
 Library "rossa"
   Path: lib/
   Modules: 

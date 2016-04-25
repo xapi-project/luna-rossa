@@ -4,7 +4,7 @@
 
 exception Error of string
 
-type api = string
+type api = string (* a URI like http://hostname *)
 type user = 
   { username : string
   ; password : string 
@@ -14,11 +14,11 @@ type t (* a Xen Server *)
 
 val read: string -> t list
 (** [read servers_json] read a file [servers_json] that describes 
-		a set of servers that are available for testing *)
+    a set of servers that are available for testing *)
 
 val find: string -> t list -> t (* Not_found *)
 (** [find name ts] finds a server by name in a list of servers or raise
-		[Not_found] *)
+    [Not_found] *)
 
 
 val name :  t -> string 
