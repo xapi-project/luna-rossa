@@ -30,6 +30,8 @@ AUTOGEN += 	setup.ml
 # -- the targets
 
 TARGETS += 	quicktest.native
+TARGETS += 	powercycle.native
+TARGETS += 	lib/rossa.cmxa
 
 OCB_FLAGS 	= -use-ocamlfind $(TAG) $(PKG) $(SRC)
 OCB 		= ocamlbuild $(OCB_FLAGS)

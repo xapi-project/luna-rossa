@@ -3,6 +3,7 @@
 module U      = Yojson.Basic.Util
 module S      = Rossa_server
 module C      = Rossa_config
+module X      = Rossa_xen
 module CMD    = Cmdliner
 
 let printf    = Printf.printf
@@ -18,6 +19,8 @@ let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
 
+let thread vm rpc session =
+  Lwt.return ()
 
 (* [main] is the heart of this test *)
 let main servers_json config_json  = 
@@ -25,7 +28,10 @@ let main servers_json config_json  =
   let config    = C.read config_json "powercycle" in 
   let hostname  = config |> U.member "server" |> U.to_string in
   let vm        = config |> U.member "vm" |> U.to_string in
-    ()
+  let server    = find hostname servers in
+  let api       = S.api server in
+  let root      = S.root server in
+    Lwt_main.run (X.with_session api root (thread vm))
 
 let servers =
   let doc = "JSON file describing Xen Servers available for testing." in

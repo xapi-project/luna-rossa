@@ -23,8 +23,8 @@ Executable "powercycle"
   CompiledObject: best
   BuildDepends:
     cmdliner,
-    rossa
-
+    rossa,
+    xen-api-client.lwt
 
 Library "rossa"
   Path: lib/
