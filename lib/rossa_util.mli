@@ -1,3 +1,7 @@
+val finally: ('a -> 'b) -> 'a -> ('c -> unit) -> 'c -> 'b
+(** [finally f x fin y] computes [f x] for the result and carries out
+		[fin y] as a side effect afterwards, even in the presence of an
+		exception from [f x]. *)
 
 val meg : int -> int64
 (** [meg n] = n*2^20 *)
