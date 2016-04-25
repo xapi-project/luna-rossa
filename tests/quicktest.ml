@@ -1,4 +1,4 @@
-(* vim: sw=2 softtabstop=2 ts=2 et: *)
+(* vim: set et sw=2 softtabstop=2 ts=2: *)
 
 module U      = Yojson.Basic.Util
 module S      = Rossa_server
@@ -25,8 +25,7 @@ let find name servers =
   *)
 let main servers_json config_json  = 
     let servers   = S.read servers_json in
-    let configs   = C.read config_json in 
-    let config    = configs "quicktest" in (* find our config *)
+    let config    = C.read config_json "quicktest" in 
     let hostname  = config |> U.member "server" |> U.to_string in
     let qtest     = config |> U.member "path"   |> U.to_string in
     let server    = find hostname servers in (* path to binary *)
