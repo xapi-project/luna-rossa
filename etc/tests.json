@@ -4,9 +4,8 @@
     {
       "name": "quicktest",
       "server": "host1",
-      "path": "/tmp/quicktestbin.opt",
+      "path": "/opt/xensource/debug/quicktest",
       "subtests": [
-        "storage",
         "vm-placement",
         "vm-memory-constraints",
         "encodings",
@@ -16,7 +15,8 @@
         "async",
         "import",
         "powercycle",
-        "copy"
+        "copy",
+        "storage"
       ]
     },
     {
