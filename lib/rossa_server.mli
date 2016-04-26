@@ -27,11 +27,13 @@ val name :  t -> string
 val root :  t -> user 
 (** credentials to access the Xen API on the server *)
 
-val ssh :   t -> string -> string
+val ssh :   t -> ('a, unit, string, string) format4  -> 'a
 (** [ssh t cmd] return a shell command as a string. Executing the shell
- * command locally leads to the execution of [cmd] on [t]. 
+ * command locally leads to the execution of [cmd] on [t]. [cmd] is a
+ * printf-style pattern like in [ssh server "ls -l %s" "/etc"].
+ *
  * Caveat: this is fragile because of quoting issues and we need a
- * better wa here.
+ * better way here.
  *)
 
 val api :   t -> api

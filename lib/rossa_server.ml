@@ -28,12 +28,15 @@ let root t = t.root
 let json t = t.json
 
 (** [ssh t cmd] returns a shell command as a string. Executing the shell
- * command locally leads to the execution of [cmd] on [t]. 
+ * command locally leads to the execution of [cmd] on [t]. [cmd] is a
+ * printf-style pattern.
+ *
  * Caveat: this is fragile because of quoting issues and we need a
- * better wa here.
+ * better way here.
  *)
 
-let ssh  t cmd = String.concat " " (t.ssh @ [cmd])
+let ssh t fmt =
+  Printf.ksprintf (fun cmd -> String.concat " " (t.ssh @ [cmd])) fmt
 
 (** parse a server object from the JSON inventory *)
 let server json =

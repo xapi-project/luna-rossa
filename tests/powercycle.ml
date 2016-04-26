@@ -13,6 +13,12 @@ let (>>=)     = Xen_api_lwt_unix.(>>=)
 exception Error of string
 let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 
+(** [xs_write] writes a [value] to a Xen Store [path]. This
+ * implementation uses SSH to do this.  *)
+let xs_write server path value =
+  let cmd = S.ssh server "xenstore write '%s' '%s'" path value in 
+    Yorick.(?| cmd)
+
 (** find the named server in the inventory *)
 let find name servers =
   try  S.find name servers 
