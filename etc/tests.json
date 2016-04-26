@@ -4,7 +4,20 @@
     {
       "name": "quicktest",
       "server": "host1",
-      "path": "/tmp/quicktestbin.opt"
+      "path": "/tmp/quicktestbin.opt",
+      "subtests": [
+        "storage",
+        "vm-placement",
+        "vm-memory-constraints",
+        "encodings",
+        "http",
+        "event",
+        "vdi",
+        "async",
+        "import",
+        "powercycle",
+        "copy"
+      ]
     },
     {
       "name": "powercycle",

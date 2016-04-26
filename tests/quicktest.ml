@@ -18,6 +18,18 @@ let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
 
+(** [test] runs a single qucktest [subtest] on [server]. The quicktest
+ * binary can be found at [path]. *)
+let test server path subtest =
+  let cmd = sprintf "%s -single %s" path subtest in
+  let open Yorick in
+    match !?* (?|>) "%s" (S.ssh server cmd) with
+    | _     , 0   -> 
+        echo "# quicktest (%-25s) finished successfully" subtest
+    | stdout, rc  -> 
+      ( echo "# quicktest (%-25s) failed with exit code %d" subtest rc
+      ; echo "%s" stdout
+      )
 
 (** [main file_json hostname] is the heart of this test. The two
   * parameters are JSON objects describing the run-time parameter
@@ -26,18 +38,13 @@ let find name servers =
 let main servers_json config_json  = 
     let servers   = S.read servers_json in
     let config    = C.read config_json "quicktest" in 
-    let hostname  = config |> U.member "server" |> U.to_string in
-    let qtest     = config |> U.member "path"   |> U.to_string in
+    let hostname  = config |> U.member "server"   |> U.to_string in
+    let path      = config |> U.member "path"     |> U.to_string in
     let server    = find hostname servers in (* path to binary *)
-    let open Yorick in
-      match !?* (?|>) "%s" (S.ssh server qtest) with
-      | _     , 0   -> 
-          echo "quicktest finished successfully"
-      | stdout, rc  -> 
-        ( echo "quicktest failed with exit code %d" rc
-        ; echo "%s" stdout
-        )
-
+      config 
+      |> U.member "subtests"
+      |> U.convert_each U.to_string 
+      |> List.iter (test server path)
 
 let servers =
   let doc = "JSON file describing Xen Servers available for testing." in
