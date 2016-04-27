@@ -1,0 +1,17 @@
+{
+  "version": "0.1",
+  "servers": [
+    {
+      "name": "host1",
+      "ssh": [
+        "ssh",
+        "root@dt87"
+      ],
+      "xen": {
+        "api": "http://dt87",
+        "user": "root",
+        "password": "xenroot"
+      }
+    }
+  ]
+}
