@@ -23,6 +23,7 @@ let find name servers =
 let test server path subtest =
   let cmd = S.ssh server "%s -single %s" path subtest in
   let open Yorick in
+    (* echo "# cmd = '%s'" cmd; *)
     match !?* (?|>) "%s" cmd with
     | _     , 0   -> 
         echo "# quicktest (%-25s) finished successfully" subtest

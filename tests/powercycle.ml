@@ -19,7 +19,7 @@ let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 (** [xs_write] writes a [value] to a Xen Store [path]. This
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
-  let cmd = S.ssh server "xenstore write '%s' '%s'" path value in 
+  let cmd = S.ssh server "xenstore write %s %s" path value in 
     Lwt.catch 
       (fun ()     -> return Yorick.(?| cmd))
       (function e -> Lwt.fail e)

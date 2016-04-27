@@ -36,7 +36,8 @@ let json t = t.json
  *)
 
 let ssh t fmt =
-  Printf.ksprintf (fun cmd -> String.concat " " (t.ssh @ [cmd])) fmt
+    let prefix = String.concat " " t.ssh in
+      Printf.ksprintf (fun cmd -> prefix^" '"^cmd^"'") fmt
 
 (** parse a server object from the JSON inventory *)
 let server json =
