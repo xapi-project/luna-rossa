@@ -1,4 +1,7 @@
-(** This module provides functions on top of the Xen API that supoorts
+(**
+ * vim: set ts=2 sw=2 et:
+ *   
+ * This module provides functions on top of the Xen API that supoorts
  * writing test cases
  *)
 
@@ -41,9 +44,13 @@ let has_name name = function
   
 (** [select vms rpc session p] returns all VMs matching [p] *)
 let select_vms rpc session p =
-  VM.get_all_records rpc session >>= fun vms ->
-    return (List.filter p vms)
-
+  Lwt.catch
+    (fun () -> VM.get_all_records rpc session >>= fun vms ->
+      return (List.filter p vms))
+    (* this should never happen but did between 0.9.10 and Xen 7 *)
+    (fun e -> 
+      fail "%s Xen Api Client 0.9.10/Xen Server 7 incompatibility" __LOC__)
+      
 (** [find_template rpc session name] returns the first template
  * that has name [name] or [None].
  *)
