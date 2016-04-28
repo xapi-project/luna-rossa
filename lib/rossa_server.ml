@@ -1,3 +1,4 @@
+(* vim: set sw=2 ts=2 et *)
 
 module Y  = Yojson.Basic
 module U  = Yojson.Basic.Util
@@ -27,17 +28,36 @@ let api  t = t.api
 let root t = t.root
 let json t = t.json
 
-(** [ssh t cmd] returns a shell command as a string. Executing the shell
- * command locally leads to the execution of [cmd] on [t]. [cmd] is a
- * printf-style pattern.
- *
- * Caveat: this is fragile because of quoting issues and we need a
- * better way here.
- *)
+(** [wait pid] wait for process [pid] to terminate *)
+let wait pid = match Unix.waitpid [] pid with
+  | (_,Unix.WEXITED k)	  -> k
+  | (_,Unix.WSIGNALED _)  -> fail "child %d unexpectedly signaled" pid
+  | (_,Unix.WSTOPPED _)	  -> fail "child %d unexpectedly stopped" pid
 
-let ssh t fmt =
-    let prefix = String.concat " " t.ssh in
-      Printf.ksprintf (fun cmd -> prefix^" '"^cmd^"'") fmt
+  (** [exec cmd args] executes [cmd] with [arguments] as a new process.
+   * [cmd] is searched along the current PATH. [argumens] are *not*
+   * interpreted by a shell.
+   *)
+let exec cmd args =
+  let execv = cmd::args |> Array.of_list in
+  let buf = Buffer.create (5*80) in
+  let rstdout, stdout = Unix.pipe () in
+  let stdin  , stderr = Unix.stdin, Unix.stderr in
+    let () = Unix.set_close_on_exec rstdout in
+    let rc = wait (Unix.create_process cmd execv stdin stdout stderr) in
+    let () = Unix.close stdout in
+    let stdout = Unix.in_channel_of_descr rstdout in
+      begin 
+        try while true do Buffer.add_channel buf stdout 1 done
+        with End_of_file -> close_in stdout
+      end;
+      rc, Buffer.contents buf
+
+
+let ssh t arg =
+  match t.ssh with
+    | []        -> fail "no ssh command found in JSON server record"
+    | cmd::args -> exec cmd (args@[arg])
 
 (** parse a server object from the JSON inventory *)
 let server json =

@@ -13,6 +13,8 @@ let eprintf   = Printf.eprintf
 exception Error of string
 let error fmt = Printf.ksprintf (fun msg -> raise (Error msg)) fmt
 
+let echo fmt = Printf.ksprintf (fun msg -> print_endline msg) fmt
+
 (** find the named server in the inventory *)
 let find name servers =
   try  S.find name servers 
@@ -21,13 +23,12 @@ let find name servers =
 (** [test] runs a single qucktest [subtest] on [server]. The quicktest
  * binary can be found at [path]. *)
 let test server path subtest =
-  let cmd = S.ssh server "%s -single %s" path subtest in
-  let open Yorick in
-    (* echo "# cmd = '%s'" cmd; *)
-    match !?* (?|>) "%s" cmd with
-    | _     , 0   -> 
-        echo "# quicktest (%-25s) finished successfully" subtest
-    | stdout, rc  -> 
+  let cmd = sprintf "%s -single %s" path subtest in
+    match S.ssh server cmd with
+    | 0,  stdout   -> 
+      ( echo "# quicktest (%-25s) finished successfully" subtest
+      )
+    | rc, stdout  -> 
       ( echo "# quicktest (%-25s) failed with exit code %d" subtest rc
       ; echo "%s" stdout
       )

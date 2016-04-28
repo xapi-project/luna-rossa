@@ -29,7 +29,6 @@ Executable "powercycle"
 Library "rossa"
   Path: lib/
   Modules: 
-    Yorick,
     Rossa_util,
     Rossa_server,
     Rossa_xen,

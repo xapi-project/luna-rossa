@@ -22,7 +22,17 @@
     {
       "name": "powercycle",
       "server": "host1",
-      "vm": "minion"
+      "server-setup.sh": [
+        "set -e",
+        "GH=\"https://github.com/xapi-project\"",
+        "VM=\"$GH/xen-test-vm/releases/download/0.0.5/test-vm.xen.gz\"",
+        "cd /boot/guest",
+        "curl --fail -s -L \"$VM\" > powercycle.xen.gz"
+      ],
+      "server-cleanup.sh": [
+        "set -e",
+        "rm -f /boot/guest/powercycle.xen.gz"
+      ]
     }
   ]
 }

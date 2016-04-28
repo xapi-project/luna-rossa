@@ -4,11 +4,41 @@
     {
       "name": "host1",
       "ssh": [
+        "vagrant",
         "ssh",
-        "root@dt87"
+        "host1",
+        "-c"
       ],
       "xen": {
-        "api": "http://dt87",
+        "api": "http://10.71.79.184",
+        "user": "root",
+        "password": "xenroot"
+      }
+    },
+    {
+      "name": "host2",
+      "ssh": [
+        "vagrant",
+        "ssh",
+        "host2",
+        "-c"
+      ],
+      "xen": {
+        "api": "http://10.71.79.239",
+        "user": "root",
+        "password": "xenroot"
+      }
+    },
+    {
+      "name": "host3",
+      "ssh": [
+        "vagrant",
+        "ssh",
+        "host3",
+        "-c"
+      ],
+      "xen": {
+        "api": "http://10.71.79.210",
         "user": "root",
         "password": "xenroot"
       }

@@ -5,6 +5,8 @@
       "name": "host1",
       "ssh": [
         "ssh",
+        "-t",
+        "-q",
         "root@dt87"
       ],
       "xen": {
