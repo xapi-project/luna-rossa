@@ -1,8 +1,26 @@
-Name: rossa
+Name: luna-rossa
 Version: 0.0.1
-Synopsis: A framework for testing Xen Server
+Synopsis: A suite of tests for testing Xen Server
+Description:
+  Luna Rossa is a suite of tests for testing Xen Server. Luna Rossa
+  is configured through two files: servers.json and tests.json. The
+  first tells Luna Rossa about the hosts running Xen Server and how to
+  access them. The latter contains parameters for tests in the test
+  suite. Examples are provided.
+
+  Luna Rossa was developed at Citrix for internal testing. It tries to
+  keep dependencies and assumptions about the environment small.
+
+  One of the tests dependends on the Xen Test VM, a kernel. The test
+  downloads the kernel and boots it as a guest. Executing foreign code
+  is obviously a security risk. 
+
 Authors: 
   Christian Lindig <christian.lindig@citrix.com>
+
+Maintainers: 
+  Christian Lindig <christian.lindig@citrix.com>
+
 License: MIT
 
 OASISFormat: 0.4
@@ -12,28 +30,28 @@ Plugins: META (0.4), DevFiles (0.4)
 Executable "quicktest"
   Path: tests/ 
   MainIs: quicktest.ml
-  CompiledObject: best
+  CompiledObject: native
   BuildDepends:
     cmdliner,
-    rossa
+    luna-rossa
 
 Executable "powercycle"
   Path: tests/ 
   MainIs: powercycle.ml
-  CompiledObject: best
+  CompiledObject: native
   BuildDepends:
     cmdliner,
-    rossa,
+    luna-rossa,
     xen-api-client.lwt
 
-Library "rossa"
+Library "luna-rossa"
   Path: lib/
   Modules: 
     Rossa_util,
     Rossa_server,
     Rossa_xen,
     Rossa_config
-  Findlibname: rossa
+  Findlibname: luna-rossa
   BuildDepends:   
     xen-api-client.lwt,
     yojson
