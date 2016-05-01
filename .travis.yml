@@ -7,10 +7,4 @@ os:
   - linux
 script: 
   - bash -ex .travis-opam.sh
-  - opam install oasis
-  - opam install cmdliner
-  - opam install xen-api-client
-  - opam install yojson
-  - oasis setup
-  - ./configure && make
 
