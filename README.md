@@ -14,13 +14,13 @@ its environment explicit.
   resides in `tests/`. Tests are combined into one binary `lunarossa`
   and each test is run as a sub command:
 
-    lunarossa powercycle -s servers.json -c tests.json
+        lunarossa powercycle -s servers.json -c tests.json
 
   For help and documentation, try:
 
-    lunarossa --help
-    lunarossa help
-    lunarossa powercycle --help
+        lunarossa --help
+        lunarossa help
+        lunarossa powercycle --help
 
 * Luna Rossa doesn't deal with provisioning the test environment. 
   Instead, it reads the inventory of machines that tests can use from
