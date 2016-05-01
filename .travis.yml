@@ -10,7 +10,7 @@ script:
   - opam install oasis
   - opam install cmdliner
   - opam install xen-api-client
-  - opem install yojson
+  - opam install yojson
   - oasis setup
   - ./configure && make
 
