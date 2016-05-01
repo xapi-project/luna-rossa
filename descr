@@ -1,0 +1,11 @@
+A suite of tests for testing Xen Server
+Luna Rossa is a suite of tests for testing Xen Server. All tests are
+started from one central binary "lunarossa" and each test is implemented 
+as a sub command. Luna Rossa was developed at Citrix for internal
+testing. It tries to keep dependencies and assumptions about the
+environment small. Implementing new tests is supported by a library.
+Luna Rossa is configured through two files: servers.json and tests.json.
+The first tells Luna Rossa about the hosts running Xen Server and how to
+access them. The latter contains parameters for tests in the test suite.
+Examples are provided. 
+

@@ -129,32 +129,3 @@ let main servers_json config_json  =
     ; ssh server cleanup_sh
     )
 
-let servers =
-  let doc = "JSON file describing Xen Servers available for testing." in
-  CMD.Arg.(value
-    & opt file "etc/servers.json" 
-    & info ["s"; "servers"] ~docv:"servers.json" ~doc)
- 
-let config =
-  let doc = "JSON file describing test configurations." in
-  CMD.Arg.(value
-    & opt file "etc/tests.json"
-    & info ["c"; "config"] ~docv:"tests.json" ~doc)
-   
-let main_t = CMD.Term.(const main $ servers $ config)
-
-let info =
-  let doc = "Start a Mirage VM and powercycle it" in
-  let man = 
-    [ `S "DESCRIPTION"
-    ; `P "Start a VM and go through a powercycle with it."
-    ; `S "BUGS"
-    ; `P "Report bug on the github issue tracker" 
-    ] 
-  in
-    CMD.Term.info "powercycle" ~version:"1.0" ~doc ~man
-    
-let () = 
-  match CMD.Term.eval (main_t, info) with 
-  | `Error _  -> exit 1 
-  | _         -> exit 0

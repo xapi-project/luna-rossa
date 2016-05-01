@@ -11,9 +11,16 @@ Rossa is designed to work independently and to make assumptions about
 its environment explicit.
 
 * Luna Rossa provides a library (in `lib/`) for writing tests whose code
-    resides in `tests/`. Currently each test is compiled into an individual
-    binary but the plan is to combine them into one binary as this makes
-    installing the binaries easier.
+  resides in `tests/`. Tests are combined into one binary `lunarossa`
+  and each test is run as a sub command:
+
+    lunarossa powercycle -s servers.json -c tests.json
+
+  For help and documentation, try:
+
+    lunarossa --help
+    lunarossa help
+    lunarossa powercycle --help
 
 * Luna Rossa doesn't deal with provisioning the test environment. 
   Instead, it reads the inventory of machines that tests can use from
@@ -55,8 +62,8 @@ files: `servers.json` informs it about the server(s) to use for testing
 and `tests.json` can be used to customise tests. You should start with
 the one provided in `etc/`.
 
-        quicktest -s servers.json -c etc/tests.json
-        powercycle -s servers.json -c etc/tests.json
+    quicktest -s servers.json -c etc/tests.json
+    powercycle -s servers.json -c etc/tests.json
 
 * `quicktest` - executes the `quicktest` binary on a host with 
   a number of sub tests.

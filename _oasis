@@ -27,31 +27,24 @@ OASISFormat: 0.4
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
 
-Executable "quicktest"
-  Path: tests/ 
-  MainIs: quicktest.ml
-  CompiledObject: native
-  BuildDepends:
-    cmdliner,
-    luna-rossa
-
-Executable "powercycle"
-  Path: tests/ 
-  MainIs: powercycle.ml
-  CompiledObject: native
-  BuildDepends:
-    cmdliner,
-    luna-rossa,
-    xen-api-client.lwt
-
-Library "luna-rossa"
+Library "librossa"
   Path: lib/
   Modules: 
     Rossa_util,
     Rossa_server,
     Rossa_xen,
     Rossa_config
-  Findlibname: luna-rossa
+  Findlibname: librossa
   BuildDepends:   
     xen-api-client.lwt,
     yojson
+
+Executable "lunarossa"
+  Path: tests/ 
+  MainIs: lunarossa.ml
+  CompiledObject: native
+  BuildDepends:
+    cmdliner,
+    librossa
+
+
