@@ -1,5 +1,6 @@
 <!-- vim: set ts=4 sw=4 et: -->
 
+[![Build Status](https://travis-ci.org/lindig/luna-rossa.svg?branch=master)](https://travis-ci.org/lindig/luna-rossa)
 
 # Luna Rossa - Testing Xen Server
 
