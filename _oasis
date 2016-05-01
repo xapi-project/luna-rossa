@@ -34,7 +34,6 @@ Library "librossa"
     Rossa_server,
     Rossa_xen,
     Rossa_config
-  Findlibname: librossa
   BuildDepends:   
     xen-api-client.lwt,
     yojson

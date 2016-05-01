@@ -13,7 +13,7 @@ build: [
   [make]
 ]
 install: [make "install"]
-remove: ["ocamlfind" "remove" "luna-rossa"]
+remove: ["ocamlfind" "remove" "librossa"]
 depends: [
   "ocamlfind" {build}
   "oasis" {build & >= "0.4"}
