@@ -1,0 +1,16 @@
+language: c
+sudo: required
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
+env:
+  - OCAML_VERSION=4.02
+os:
+  - linux
+script: 
+  - bash -ex .travis-opam.sh
+  - opam install oasis
+  - opam install cmdliner
+  - opam install xen-api-client
+  - opem install yojson
+  - oasis setup
+  - ./configure && make
+
