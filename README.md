@@ -38,32 +38,31 @@ _This is work in progress_
 
 ---
 
-# Build Dependencies
+# Building and Installing
 
 Luna Rossa is implemented in OCaml. OCaml's package manager Opam is
-essential for building Luna Rossa.
+essential for building Luna Rossa. Luna Rossa hasn't been released as an
+offical Opam package but it is easy to install it by pinning the source
+code repository:
 
-    opam install xen-api-client yojson
-    opam install oasis
+    opam pin add luna-rossa https://github.com/lindig/luna-rossa.git
 
-# Building
-
-The build process is supported by Oasis which generates a Makefile and a
-configure script:
-
-    oasis setup -setup-update dynamic
-    ./configure
-    make
+This installs the `lunarossa` binary and the `librossa` library package
+that becomes available for other code to use.  You can also look at the
+file `opam/opam` to see how to build Luna Rossa manually.
 
 # Running Tests
 
-Each test binary can be invoked with `--help`. A binary takes two JSON
-files: `servers.json` informs it about the server(s) to use for testing
-and `tests.json` can be used to customise tests. You should start with
-the one provided in `etc/`.
+All tests are invoked as sub-commands from the `lunarossa` binary.  Each
+command can be invoked with `--help`. A test takes two JSON files:
+`servers.json` informs it about the server(s) to use for testing and
+`tests.json` can be used to customise tests. You should start with the
+one provided in `etc/`.
 
-    quicktest -s servers.json -c etc/tests.json
-    powercycle -s servers.json -c etc/tests.json
+    lunarossa quicktest -s servers.json -c etc/tests.json
+    lunarossa powercycle -s servers.json -c etc/tests.json
+
+Luna rossa exits with a non-zero exit code when a test fails. 
 
 * `quicktest` - executes the `quicktest` binary on a host with 
   a number of sub tests.
