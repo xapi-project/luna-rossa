@@ -17,6 +17,73 @@ let pprintf   = Printf.printf
 exception Error of string
 let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 
+
+module Command = struct
+  type t =
+    | Shutdown
+    | Reboot
+    | Suspend
+    | Resume
+    | Crash
+    | Nop
+
+  let to_string = function
+    | Shutdown  -> "Shutdown"
+    | Reboot    -> "Reboot"
+    | Suspend   -> "Suspend"
+    | Resume    -> "Resume"
+    | Crash     -> "Crash"
+    | Nop       -> "Nop"
+end
+
+module Ack = struct
+  type t =
+    | Ok
+    | Ignore
+    | Write of string
+    | Delete
+
+  let to_string = function
+    | Ok       -> "Ok"
+    | Ignore   -> "Ignore"
+    | Write s  -> sprintf "Write(%s)" s
+    | Delete   -> "Delete"
+end
+
+module State = struct
+  type t =
+    | Halted
+    | Running
+    | Suspended
+    | Paused
+
+  let to_sting = function
+    | Halted    -> "Halted"
+    | Running   -> "Running"
+    | Suspended -> "Suspended"
+    | Paused    -> "Paused"
+
+  let all =
+    [ Halted
+    ; Running
+    ; Suspended
+    ; Paused
+    ]
+end
+
+module XenState = struct
+
+  let observe rpc session vm =
+    VM.get_power_state rpc session vm >>=
+    ( function 
+    | `Halted       -> return "Halted" 
+    | `Paused       -> return "Paused" 
+    | `Running      -> return "Running" 
+    | `Suspended    -> return "Suspended"
+    | _             -> return "unknown"
+    )
+end
+
 (** [xs_write] writes a [value] to a Xen Store [path]. This
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
@@ -80,6 +147,30 @@ let create_vm rpc session =
     ~dynamic_max:meg32 >>= fun () ->
   log "cloned '%s' to '%s'" template clone >>= fun () ->
   return vm
+
+
+ (** [provision_vm] creates a VM and brings it into [state]
+  *)
+let provision_vm rpc session state =
+  let start_paused = true in
+  create_vm rpc session >>= fun vm ->
+  match state with 
+  | State.Running -> 
+    VM.start rpc session vm (not start_paused) false >>= fun () ->
+    return vm
+  | State.Paused -> 
+    VM.start rpc session vm start_paused  false >>= fun () ->
+    return vm
+  | State.Halted -> 
+    return vm
+  | State.Suspended ->
+    VM.start rpc session vm (not start_paused) false >>= fun () ->
+    VM.suspend rpc session vm >>= fun () ->
+    return vm
+    
+
+
+
 
 let powercycle server rpc session =
     create_vm rpc session >>= fun vm ->
