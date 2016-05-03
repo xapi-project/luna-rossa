@@ -23,14 +23,16 @@ let find name servers =
 (** [test] runs a single qucktest [subtest] on [server]. The quicktest
  * binary can be found at [path]. *)
 let test server path subtest =
-  let cmd = sprintf "%s -single %s" path subtest in
+  let cmd = sprintf "sudo %s -single %s" path subtest in
     match S.ssh server cmd with
     | 0,  stdout   -> 
       ( echo "# quicktest (%-25s) finished successfully" subtest
+      ; 0
       )
     | rc, stdout  -> 
       ( echo "# quicktest (%-25s) failed with exit code %d" subtest rc
       ; echo "%s" stdout
+      ; rc
       )
 
 (** [main file_json hostname] is the heart of this test. The two
@@ -46,6 +48,7 @@ let main servers_json config_json  =
       config 
       |> U.member "subtests"
       |> U.convert_each U.to_string 
-      |> List.iter (test server path)
+      |> List.map (test server path)
+      |> List.for_all ((=) 0)
 
 

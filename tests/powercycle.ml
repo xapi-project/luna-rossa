@@ -124,8 +124,12 @@ let main servers_json config_json  =
   let setup_sh  = config |> U.member "server-setup.sh"   |> join_by_nl in
   let cleanup_sh= config |> U.member "server-cleanup.sh" |> join_by_nl
   in
-    ( ssh server setup_sh 
-    ; Lwt_main.run (X.with_session api root (powercycle server))
-    ; ssh server cleanup_sh
-    )
+    try
+      ( ssh server setup_sh 
+      ; Lwt_main.run (X.with_session api root (powercycle server))
+      ; ssh server cleanup_sh
+      ; true
+      )
+    with
+      _ -> false
 

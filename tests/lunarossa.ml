@@ -22,7 +22,7 @@ let help_main man_format cmds = function
     let conv, _ = C.Arg.enum (List.rev_map (fun s -> (s, s)) topics) in
     match conv topic with
     | `Error e -> `Error (false, e)
-    | `Ok t when t = "topics" -> List.iter print_endline topics; `Ok ()
+    | `Ok t when t = "topics" -> List.iter print_endline topics; `Ok true
     | `Ok t when List.mem t cmds -> `Help (man_format, Some t)
     | `Ok t -> (* only reached when we add topics above *)
         let page = (topic, 7, "", "", ""), 
@@ -30,7 +30,9 @@ let help_main man_format cmds = function
             ;`P "Here is room for online help texts"
             ] 
         in
-            `Ok (C.Manpage.print man_format Format.std_formatter page)
+            `Ok ( C.Manpage.print man_format Format.std_formatter page
+                ; true
+                )
 
 (** module CMD holds all functions that implement and document
     (sub) commands and options *)
@@ -124,5 +126,7 @@ end
 
 let () = 
   match C.Term.eval_choice CMD.lunarossa CMD.cmds with 
-  | `Error _  -> exit 1 
-  | _         -> exit 0
+  | `Ok(true)   -> exit 0 (* all tests passed *)
+  | `Ok(false)  -> exit 1 (* some test failed *)
+  | `Error _    -> exit 2 (* unexpected error *)
+  | _           -> exit 3 (* Version, Help    *)
