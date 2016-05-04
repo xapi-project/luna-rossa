@@ -1,12 +1,13 @@
 (* vim: set et sw=2 softtabstop=2 ts=2: *)
 
-module U      = Yojson.Basic.Util
 module S      = Rossa_server
 module C      = Rossa_config
 module X      = Rossa_xen
 module CMD    = Cmdliner
 module VM     = Xen_api_lwt_unix.VM
 module E      = Api_errors
+module Y      = Yojson.Basic
+module U      = Yojson.Basic.Util
 
 let return    = Xen_api_lwt_unix.return
 let (>>=)     = Xen_api_lwt_unix.(>>=)
@@ -18,25 +19,47 @@ exception Error of string
 let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 
 
-module Command = struct
+module HostRequest = struct
   type t =
     | Shutdown
     | Reboot
     | Suspend
     | Resume
-    | Crash
-    | Nop
 
   let to_string = function
     | Shutdown  -> "Shutdown"
     | Reboot    -> "Reboot"
     | Suspend   -> "Suspend"
     | Resume    -> "Resume"
-    | Crash     -> "Crash"
-    | Nop       -> "Nop"
 end
 
-module Ack = struct
+module ClientAction = struct
+  type t =
+    | Shutdown
+    | Reboot
+    | Suspend
+    | Resume
+    | Ignore
+    | Crash
+
+  let to_string = function
+    | Shutdown  -> "Shutdown"
+    | Reboot    -> "Reboot"
+    | Suspend   -> "Suspend"
+    | Resume    -> "Resume"
+    | Ignore    -> "Ignore"
+    | Crash     -> "Crash"
+
+  let to_json = function
+    | Shutdown  -> `String "poweroff"
+    | Reboot    -> `String "reboot"
+    | Suspend   -> `String "suspend"
+    | Resume    -> `String "Resume"
+    | Ignore    -> `String "ignore"
+    | Crash     -> `String "crash"
+end
+
+module AckRequest = struct
   type t =
     | Ok
     | Ignore
@@ -48,16 +71,22 @@ module Ack = struct
     | Ignore   -> "Ignore"
     | Write s  -> sprintf "Write(%s)" s
     | Delete   -> "Delete"
+
+  let to_json = function
+    | Ok       -> `String "ok"
+    | Ignore   -> `String "none"
+    | Delete   -> `String "delete"
+    | Write s  -> `String s
 end
 
-module State = struct
+module ClientState = struct
   type t =
     | Halted
     | Running
     | Suspended
     | Paused
 
-  let to_sting = function
+  let to_string = function
     | Halted    -> "Halted"
     | Running   -> "Running"
     | Suspended -> "Suspended"
@@ -84,6 +113,15 @@ module XenState = struct
     )
 end
 
+let command ack action =
+    `Assoc
+    [ "when"    , `String "onshutdown"
+    ; "action"  , ClientAction.to_json action
+    ; "ack"     , AckRequest.to_json ack
+    ]
+    |> Y.to_string
+    
+
 (** [xs_write] writes a [value] to a Xen Store [path]. This
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
@@ -99,6 +137,8 @@ let xs_testing server domid value =
     server 
     (sprintf "/local/domain/%Ld/control/testing" domid)
     value
+
+
 
 (** find the named server in the inventory *)
 let find name servers =
@@ -155,45 +195,47 @@ let provision_vm rpc session state =
   let start_paused = true in
   create_vm rpc session >>= fun vm ->
   match state with 
-  | State.Running -> 
+  | ClientState.Running -> 
     VM.start rpc session vm (not start_paused) false >>= fun () ->
     return vm
-  | State.Paused -> 
+  | ClientState.Paused -> 
     VM.start rpc session vm start_paused  false >>= fun () ->
     return vm
-  | State.Halted -> 
+  | ClientState.Halted -> 
     return vm
-  | State.Suspended ->
+  | ClientState.Suspended ->
     VM.start rpc session vm (not start_paused) false >>= fun () ->
     VM.suspend rpc session vm >>= fun () ->
     return vm
     
 
-
-
-
-let powercycle server rpc session =
-    create_vm rpc session >>= fun vm ->
-    VM.start rpc session vm false false >>= fun () -> 
+let powercycle server rpc session state =
+    provision_vm rpc session state >>= fun vm ->
     Lwt.catch 
       (fun () ->
-        log "VM started" >>= fun () ->
         VM.get_domid rpc session vm >>= fun domid ->
         log "VM domid is %Ld" domid >>= fun () ->
         Lwt_unix.sleep 5.0 >>= fun () ->
+        log "attempting clean shutdown" >>= fun () ->
         VM.clean_shutdown rpc session vm >>= fun () ->
         log "VM shut down" >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ())
     (function
-      | E.Server_error("VM_BAD_POWER_STATE",_) ->
-        log "caught exception (as expected) .. cleaning up" >>= fun () ->
+      | E.Server_error(msg,_) ->
+        log "caught exception (%s) .. cleaning up" msg >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ()
       | e -> Lwt.fail(e))
 
+let test server rpc session =
+  let f state =
+    log "VM provisioned to be in state %s" (ClientState.to_string state) 
+    >>= fun () -> powercycle server rpc session state
+  in
+    Lwt_list.iter_s f ClientState.all 
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
@@ -217,7 +259,7 @@ let main servers_json config_json  =
   in
     try
       ( ssh server setup_sh 
-      ; Lwt_main.run (X.with_session api root (powercycle server))
+      ; Lwt_main.run (X.with_session api root (test server))
       ; ssh server cleanup_sh
       ; true
       )
