@@ -19,6 +19,10 @@ exception Error of string
 let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 
 
+(* The modules below are just there to structure the name space for
+ * types and values.
+ *)
+
 module HostRequest = struct
   type t =
     | Shutdown
@@ -31,6 +35,15 @@ module HostRequest = struct
     | Reboot    -> "Reboot"
     | Suspend   -> "Suspend"
     | Resume    -> "Resume"
+
+  let all = 
+    [ Shutdown
+    ; Reboot
+    ; Suspend
+    ; Resume
+    ]
+
+  let all = [ Reboot ]
 end
 
 module ClientAction = struct
@@ -41,6 +54,17 @@ module ClientAction = struct
     | Resume
     | Ignore
     | Crash
+
+  let all =
+    [ Shutdown
+    ; Reboot
+    ; Suspend
+    ; Resume
+    ; Ignore
+    ; Crash
+    ]
+
+  let all = [ Ignore ]
 
   let to_string = function
     | Shutdown  -> "Shutdown"
@@ -65,6 +89,15 @@ module AckRequest = struct
     | Ignore
     | Write of string
     | Delete
+
+  let all =
+    [ Ok
+    ; Ignore
+    ; Write("bogus")
+    ; Delete
+    ]
+
+  let all = [ Ok ]
 
   let to_string = function
     | Ok       -> "Ok"
@@ -98,10 +131,11 @@ module ClientState = struct
     ; Suspended
     ; Paused
     ]
+
+  let all = [ Running ]
 end
 
 module XenState = struct
-
   let observe rpc session vm =
     VM.get_power_state rpc session vm >>=
     ( function 
@@ -113,6 +147,40 @@ module XenState = struct
     )
 end
 
+(** [pairs xs ys] constructs a list of pairs with one from each list
+ * [xs] and [ys]. This of [pairs xs ys] as the product of [xs] and [ys]
+ * *)
+let pairs xs ys =
+  let rec loop acc = function
+    | []    -> List.concat acc
+    | x::xs -> loop ((List.map (fun y -> x,y) ys) :: acc) xs
+  in
+    loop [] xs
+
+
+module TestVector = struct
+  type t = HostRequest.t * AckRequest.t * ClientState.t * ClientAction.t
+
+  let to_string (req, ack, state, action) =
+    sprintf "%s -> %s(%s) -> %s"
+      (ClientState.to_string state)
+      (HostRequest.to_string req)
+      (AckRequest.to_string ack)
+      (ClientAction.to_string action)
+
+  let all = 
+    let ( ** ) = pairs in
+      HostRequest.all
+      ** AckRequest.all
+      ** ClientState.all
+      ** ClientAction.all
+      |> List.map (fun (a,(b,(c,d))) -> (a,b,c,d))
+end
+
+
+(** create a JSON command that is passed to the Xen Test VM
+ *  to control its behaviour
+ *)
 let command ack action =
     `Assoc
     [ "when"    , `String "onshutdown"
@@ -134,10 +202,8 @@ let xs_write server path value =
  * [domid] on [server] *)
 let xs_testing server domid value =
   xs_write 
-    server 
-    (sprintf "/local/domain/%Ld/control/testing" domid)
+    server (sprintf "/local/domain/%Ld/control/testing" domid)
     value
-
 
 
 (** find the named server in the inventory *)
@@ -207,18 +273,37 @@ let provision_vm rpc session state =
     VM.start rpc session vm (not start_paused) false >>= fun () ->
     VM.suspend rpc session vm >>= fun () ->
     return vm
-    
 
-let powercycle server rpc session state =
-    provision_vm rpc session state >>= fun vm ->
+let test server rpc session config = 
+  let (req, ack, state, action) = config in
+  log "testing %s" (TestVector.to_string config) >>= fun () ->
+  provision_vm rpc session state >>= fun vm ->
     Lwt.catch 
       (fun () ->
         VM.get_domid rpc session vm >>= fun domid ->
         log "VM domid is %Ld" domid >>= fun () ->
+        XenState.observe rpc session vm >>= fun ps ->
+        log "VM power state is %s" ps >>= fun () ->
         Lwt_unix.sleep 5.0 >>= fun () ->
-        log "attempting clean shutdown" >>= fun () ->
-        VM.clean_shutdown rpc session vm >>= fun () ->
-        log "VM shut down" >>= fun () ->
+        (* prime the VM *)
+        ( match req with
+        | HostRequest.Shutdown ->
+          VM.clean_shutdown rpc session vm >>= fun () ->
+          return ()
+
+        | HostRequest.Reboot   ->
+          VM.hard_reboot rpc session vm >>= fun () ->
+          return ()
+        
+        | HostRequest.Suspend  ->
+          VM.suspend rpc session vm >>= fun () ->
+          return ()
+
+        | HostRequest.Resume   ->
+          VM.resume rpc session vm true true >>= fun () ->
+          return ()
+        
+        ) >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ())
@@ -230,12 +315,8 @@ let powercycle server rpc session state =
         Lwt.return ()
       | e -> Lwt.fail(e))
 
-let test server rpc session =
-  let f state =
-    log "VM provisioned to be in state %s" (ClientState.to_string state) 
-    >>= fun () -> powercycle server rpc session state
-  in
-    Lwt_list.iter_s f ClientState.all 
+let test_configs server rpc session =
+    Lwt_list.iter_s (test server rpc session) TestVector.all
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
@@ -259,7 +340,7 @@ let main servers_json config_json  =
   in
     try
       ( ssh server setup_sh 
-      ; Lwt_main.run (X.with_session api root (test server))
+      ; Lwt_main.run (X.with_session api root (test_configs server))
       ; ssh server cleanup_sh
       ; true
       )
