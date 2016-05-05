@@ -59,6 +59,15 @@ let ssh t arg =
     | []        -> fail "no ssh command found in JSON server record"
     | cmd::args -> exec cmd (args@[arg])
 
+module Lwt = struct
+		let ssh t arg =
+			match t.ssh with
+				| [] -> Lwt.fail_with "no ssh command found in JSON server record"
+				| cmd::args -> 
+						let command = (cmd, Array.of_list (cmd::args)) in
+							Lwt_process.pread command
+end
+
 (** parse a server object from the JSON inventory *)
 let server json =
   let name = json |> U.member "name"|> U.to_string  in

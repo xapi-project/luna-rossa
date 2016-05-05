@@ -36,6 +36,10 @@ val ssh :   t -> string -> int * string
  * gets unexpectedly killed.
  *)
 
+module Lwt : sig
+	val ssh: t -> string -> string Lwt.t
+end
+
 val api :   t -> api
 (** URI for the Xen API on this server *)
 

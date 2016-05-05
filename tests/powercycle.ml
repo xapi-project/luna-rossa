@@ -214,23 +214,13 @@ let log fmt =
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
   let cmd = sprintf "sudo xenstore write '%s' '%s'" path value in 
-  match S.ssh server cmd with
-  | 0 , _      -> return ()
-  | rc, stdout -> 
-      log "command [%s] failed with %d" cmd rc >>= fun () ->
-      Lwt.fail_with (sprintf "[%s] failed" cmd)
+    S.Lwt.ssh server cmd 
 
 
 (** find the named server in the inventory *)
 let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
-(** [ssh server cmd] executes [cmd] on [server] and fails in 
-  * the case of an error *)
-let ssh server cmd =
-  match S.ssh server cmd with
-  | 0 , stdout  -> ()
-  | rc, stdout  -> error "executing [%s] failed with %d" cmd rc
 
 (** [find_template] finds a template by [name] *)
 let find_template rpc session name =
@@ -315,7 +305,7 @@ let prepare_vm server domid (config: Test.t) =
   if domid < 0L then 
     log "can't prepare VM because domid=%Ld" domid
   else
-    xs_testing server domid json >>= fun () ->
+    xs_testing server domid json >>= fun _ ->
     log "VM primed" >>= fun () ->
     sleep 2.0
 
@@ -393,6 +383,13 @@ let join_by_nl json =
   json 
   |> U.convert_each U.to_string 
   |> String.concat "\n"
+  
+(** [ssh server cmd] executes [cmd] on [server] and fails in 
+  * the case of an error *)
+let ssh server cmd =
+  match S.ssh server cmd with
+  | 0 , stdout  -> ()
+  | rc, stdout  -> error "executing [%s] failed with %d" cmd rc
 
 (* [main] is the heart of this test *)
 let main servers_json config_json suite = 
