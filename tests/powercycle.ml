@@ -23,6 +23,30 @@ let error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
  * types and values.
  *)
 
+(** state of the client before XenServer request *)
+module ClientState = struct
+  type t =
+    | Halted
+    | Running
+    | Suspended
+    | Paused
+
+  let to_string = function
+    | Halted    -> "Halted"
+    | Running   -> "Running"
+    | Suspended -> "Suspended"
+    | Paused    -> "Paused"
+
+  let all =
+    [ Halted
+    ; Running
+    ; Suspended
+    ; Paused
+    ]
+
+end
+
+(** what XenServer requests from the client *)
 module HostRequest = struct
   type t =
     | Shutdown
@@ -42,10 +66,39 @@ module HostRequest = struct
     ; Suspend
     ; Resume
     ]
-
-  let all = [ Reboot ]
 end
 
+(** how the client acks the request *)
+module AckRequest = struct
+  type t =
+    | Ok
+    | Ignore
+    | Write of string
+    | Delete
+
+  let all =
+    [ Ok
+    ; Ignore
+    ; Write("bogus")
+    ; Delete
+    ]
+
+  let all = [ Ok ]
+
+  let to_string = function
+    | Ok       -> "Ok"
+    | Ignore   -> "Ignore"
+    | Write s  -> sprintf "Write(%s)" s
+    | Delete   -> "Delete"
+
+  let to_json = function
+    | Ok       -> `String "ok"
+    | Ignore   -> `String "none"
+    | Delete   -> `String "delete"
+    | Write s  -> `String s
+end
+
+(** what the client does in response to request *)
 module ClientAction = struct
   type t =
     | Shutdown
@@ -83,58 +136,6 @@ module ClientAction = struct
     | Crash     -> `String "crash"
 end
 
-module AckRequest = struct
-  type t =
-    | Ok
-    | Ignore
-    | Write of string
-    | Delete
-
-  let all =
-    [ Ok
-    ; Ignore
-    ; Write("bogus")
-    ; Delete
-    ]
-
-  let all = [ Ok ]
-
-  let to_string = function
-    | Ok       -> "Ok"
-    | Ignore   -> "Ignore"
-    | Write s  -> sprintf "Write(%s)" s
-    | Delete   -> "Delete"
-
-  let to_json = function
-    | Ok       -> `String "ok"
-    | Ignore   -> `String "none"
-    | Delete   -> `String "delete"
-    | Write s  -> `String s
-end
-
-module ClientState = struct
-  type t =
-    | Halted
-    | Running
-    | Suspended
-    | Paused
-
-  let to_string = function
-    | Halted    -> "Halted"
-    | Running   -> "Running"
-    | Suspended -> "Suspended"
-    | Paused    -> "Paused"
-
-  let all =
-    [ Halted
-    ; Running
-    ; Suspended
-    ; Paused
-    ]
-
-  let all = [ Running ]
-end
-
 module XenState = struct
   let observe rpc session vm =
     VM.get_power_state rpc session vm >>=
@@ -158,6 +159,7 @@ let pairs xs ys =
     loop [] xs
 
 
+(** a test case is represented by Test.t *)
 module Test = struct
   type t = 
     { vm:       ClientState.t
@@ -166,9 +168,8 @@ module Test = struct
     ; action:   ClientAction.t
     }
 
-
   let to_string t =
-    sprintf "%s -> %s(%s) -> %s"
+    sprintf "VM %s -> Xen requests %s -> VM acks %s -> VM %s"
       (ClientState.to_string  t.vm)
       (HostRequest.to_string  t.request)
       (AckRequest.to_string   t.ack)
@@ -265,10 +266,14 @@ let create_vm rpc session =
   log "cloned '%s' to '%s'" template clone >>= fun () ->
   return vm
 
+(** [sleep secs] waits for [secs] seconds *)
+let sleep secs =
+  log "waiting %3.1fs" secs >>= fun () ->
+  Lwt_unix.sleep secs
 
  (** [provision_vm] creates a VM and brings it into [state]
   *)
-let provision_vm rpc session state =
+let provision_vm rpc session (state: ClientState.t) =
   let start_paused = true in
   create_vm rpc session >>= fun vm ->
   match state with 
@@ -285,8 +290,18 @@ let provision_vm rpc session state =
     VM.suspend rpc session vm >>= fun () ->
     return vm
 
-let test server rpc session config = 
-  log "testing %s" (Test.to_string config) >>= fun () ->
+(** [trying f] ignores execptions from the API *)
+let trying f = Lwt.catch f 
+  (function 
+    | E.Server_error(msg,_) -> 
+      log "ignoring exception %s" msg >>= fun () -> return ()
+    | e ->
+      log "unexpected exception - giving up" >>= fun () ->
+      Lwt.fail(e))
+
+(** [exec] executes a single test *)
+let exec server rpc session (config: Test.t) = 
+  log "## testing %s" (Test.to_string config) >>= fun () ->
   provision_vm rpc session config.Test.vm >>= fun vm ->
     Lwt.catch 
       (fun () ->
@@ -294,39 +309,52 @@ let test server rpc session config =
         log "VM domid is %Ld" domid >>= fun () ->
         XenState.observe rpc session vm >>= fun ps ->
         log "VM power state is %s" ps >>= fun () ->
-        Lwt_unix.sleep 5.0 >>= fun () ->
+        sleep 1.0 >>= fun () ->
         (* prime the VM *)
         ( match config.Test.request with
         | HostRequest.Shutdown ->
           VM.clean_shutdown rpc session vm >>= fun () ->
+          log "VM shutdown" >>= fun () ->
           return ()
 
         | HostRequest.Reboot   ->
           VM.hard_reboot rpc session vm >>= fun () ->
+          log "VM rebooted" >>= fun () ->
           return ()
         
         | HostRequest.Suspend  ->
           VM.suspend rpc session vm >>= fun () ->
+          log "VM suspended" >>= fun () ->
           return ()
 
         | HostRequest.Resume   ->
           VM.resume rpc session vm true true >>= fun () ->
+          log "VM resumed" >>= fun () ->
           return ()
         
         ) >>= fun () ->
+        VM.get_domid rpc session vm >>= fun domid ->
+        log "VM domid is %Ld" domid >>= fun () ->
+        XenState.observe rpc session vm >>= fun ps ->
+        log "VM power state is %s" ps >>= fun () ->
+        VM.clean_shutdown rpc session vm >>= fun () ->
+        log "VM shut down" >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ())
     (function
       | E.Server_error(msg,_) ->
         log "caught exception (%s) .. cleaning up" msg >>= fun () ->
-        VM.destroy rpc session vm >>= fun () ->
+        trying (fun () -> VM.hard_shutdown rpc session vm) >>= fun () ->
+        log "VM shut down" >>= fun () ->
+        trying (fun () -> VM.destroy rpc session vm) >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ()
       | e -> Lwt.fail(e))
 
-let test_configs server rpc session =
-    Lwt_list.iter_s (test server rpc session) Test.all
+(** [test] runs all test cases that we have *)
+let test server rpc session =
+    Lwt_list.iter_s (exec server rpc session) Test.all
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
@@ -350,7 +378,7 @@ let main servers_json config_json  =
   in
     try
       ( ssh server setup_sh 
-      ; Lwt_main.run (X.with_session api root (test_configs server))
+      ; Lwt_main.run (X.with_session api root (test server))
       ; ssh server cleanup_sh
       ; true
       )
