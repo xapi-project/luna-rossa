@@ -116,11 +116,28 @@ module CMD = struct
       , C.Term.info "powercycle" ~version:"1.0" ~doc ~man
       )
 
+  (** This is a template for adding new tests *)
+  let dummy =
+    let doc = "Run a dummy test" in
+    let man = 
+      [ `S "DESCRIPTION"
+      ; `P "Executes a date command on a list of servers. This list
+            is provided in the 'servers' array in tests.json" 
+      ; `S "BUGS"
+      ; `P "Report bug on the github issue tracker" 
+      ] 
+    in
+      ( C.Term.(const Dummy.main $ servers $ config)
+      , C.Term.info "dummy" ~version:"1.0" ~doc ~man
+      )
+
+
   (** add any additional test here *)
   let cmds = 
     [ help
     ; quicktest
     ; powercycle
+    ; dummy
     ] 
 end
 

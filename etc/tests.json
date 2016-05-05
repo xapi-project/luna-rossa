@@ -33,6 +33,10 @@
         "set -e",
         "rm -f /boot/guest/powercycle.xen.gz"
       ]
+    },
+    {
+      "name": "dummy",
+      "servers": ["host1"]
     }
   ]
 }
