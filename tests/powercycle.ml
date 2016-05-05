@@ -205,24 +205,26 @@ module Test = struct
 end
 
 
+(** [log fmt] emit printf-style log message from a thread to stdout *)
+let log fmt =
+  Printf.kprintf (fun msg -> Lwt.return (print_endline @@ "# "^msg)) fmt
+
+
 (** [xs_write] writes a [value] to a Xen Store [path]. This
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
-  let cmd = sprintf "xenstore write '%s' '%s'" path value in 
+  let cmd = sprintf "sudo xenstore write '%s' '%s'" path value in 
   match S.ssh server cmd with
   | 0 , _      -> return ()
-  | rc, stdout -> X.fail "command [%s] failed with %d" cmd rc
+  | rc, stdout -> 
+      log "command [%s] failed with %d" cmd rc >>= fun () ->
+      Lwt.fail_with (sprintf "[%s] failed" cmd)
 
 
 (** find the named server in the inventory *)
 let find name servers =
   try  S.find name servers 
   with Not_found -> error "host '%s' is unknown" name 
-
-(** [log fmt] emit printf-style log message from a thread to stdout *)
-let log fmt =
-  Printf.kprintf (fun msg -> Lwt.return (print_endline @@ "# "^msg)) fmt
-
 (** [ssh server cmd] executes [cmd] on [server] and fails in 
   * the case of an error *)
 let ssh server cmd =
@@ -380,7 +382,7 @@ let exec server rpc session (config: Test.t) =
 
 (** [test] runs all test cases that we have *)
 let test server tests rpc session =
-  log "running %d tests" (List.length Test.all) >>= fun () -> 
+  log "running %d tests" (List.length tests) >>= fun () -> 
   Lwt_list.iter_s (exec server rpc session) tests
 
 (** [join_by_nl] turns a JSON array of strings into a string where
