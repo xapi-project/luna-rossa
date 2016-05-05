@@ -30,9 +30,9 @@ let json t = t.json
 
 (** [wait pid] wait for process [pid] to terminate *)
 let wait pid = match Unix.waitpid [] pid with
-  | (_,Unix.WEXITED k)	  -> k
+  | (_,Unix.WEXITED k)    -> k
   | (_,Unix.WSIGNALED _)  -> fail "child %d unexpectedly signaled" pid
-  | (_,Unix.WSTOPPED _)	  -> fail "child %d unexpectedly stopped" pid
+  | (_,Unix.WSTOPPED _)   -> fail "child %d unexpectedly stopped" pid
 
   (** [exec cmd args] executes [cmd] with [arguments] as a new process.
    * [cmd] is searched along the current PATH. [argumens] are *not*
@@ -60,12 +60,12 @@ let ssh t arg =
     | cmd::args -> exec cmd (args@[arg])
 
 module Lwt = struct
-		let ssh t arg =
-			match t.ssh with
-				| [] -> Lwt.fail_with "no ssh command found in JSON server record"
-				| cmd::args -> 
-						let command = (cmd, Array.of_list (cmd::args)) in
-							Lwt_process.pread command
+    let ssh t arg =
+      match t.ssh with
+        | [] -> Lwt.fail_with "no ssh command found in JSON server record"
+        | cmd::args -> 
+            let command = (cmd, Array.of_list (cmd::args@[arg])) in
+              Lwt_process.pread command
 end
 
 (** parse a server object from the JSON inventory *)
