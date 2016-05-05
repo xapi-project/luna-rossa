@@ -83,7 +83,7 @@ module AckRequest = struct
     ; Delete
     ]
 
-  let all = [ Ok ]
+  let all = [ Ok; Write("bogus") ]
 
   let to_string = function
     | Ok       -> "Ok"
@@ -117,7 +117,7 @@ module ClientAction = struct
     ; Crash
     ]
 
-let all =
+  let all = (* no ignore for now, causes timeout? *)
     [ Shutdown
     ; Reboot
     ; Suspend
@@ -184,10 +184,10 @@ module Test = struct
   let all = 
     let ( ** ) = pairs in
       HostRequest.all
-      ** AckRequest.all
       ** ClientState.all
       ** ClientAction.all
-      |> List.map (fun (req,(ack,(vm,action))) -> 
+      ** AckRequest.all
+      |> List.map (fun (req,(vm,(action,ack))) -> 
           { vm =  vm
           ; request = req
           ; ack = ack
