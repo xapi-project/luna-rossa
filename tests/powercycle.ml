@@ -158,15 +158,21 @@ let pairs xs ys =
     loop [] xs
 
 
-module TestVector = struct
-  type t = HostRequest.t * AckRequest.t * ClientState.t * ClientAction.t
+module Test = struct
+  type t = 
+    { vm:       ClientState.t
+    ; request:  HostRequest.t
+    ; ack:      AckRequest.t
+    ; action:   ClientAction.t
+    }
 
-  let to_string (req, ack, state, action) =
+
+  let to_string t =
     sprintf "%s -> %s(%s) -> %s"
-      (ClientState.to_string state)
-      (HostRequest.to_string req)
-      (AckRequest.to_string ack)
-      (ClientAction.to_string action)
+      (ClientState.to_string  t.vm)
+      (HostRequest.to_string  t.request)
+      (AckRequest.to_string   t.ack)
+      (ClientAction.to_string t.action)
 
   let all = 
     let ( ** ) = pairs in
@@ -174,7 +180,12 @@ module TestVector = struct
       ** AckRequest.all
       ** ClientState.all
       ** ClientAction.all
-      |> List.map (fun (a,(b,(c,d))) -> (a,b,c,d))
+      |> List.map (fun (req,(ack,(vm,action))) -> 
+          { vm =  vm
+          ; request = req
+          ; ack = ack
+          ; action = action
+          })
 end
 
 
@@ -275,9 +286,8 @@ let provision_vm rpc session state =
     return vm
 
 let test server rpc session config = 
-  let (req, ack, state, action) = config in
-  log "testing %s" (TestVector.to_string config) >>= fun () ->
-  provision_vm rpc session state >>= fun vm ->
+  log "testing %s" (Test.to_string config) >>= fun () ->
+  provision_vm rpc session config.Test.vm >>= fun vm ->
     Lwt.catch 
       (fun () ->
         VM.get_domid rpc session vm >>= fun domid ->
@@ -286,7 +296,7 @@ let test server rpc session config =
         log "VM power state is %s" ps >>= fun () ->
         Lwt_unix.sleep 5.0 >>= fun () ->
         (* prime the VM *)
-        ( match req with
+        ( match config.Test.request with
         | HostRequest.Shutdown ->
           VM.clean_shutdown rpc session vm >>= fun () ->
           return ()
@@ -316,7 +326,7 @@ let test server rpc session config =
       | e -> Lwt.fail(e))
 
 let test_configs server rpc session =
-    Lwt_list.iter_s (test server rpc session) TestVector.all
+    Lwt_list.iter_s (test server rpc session) Test.all
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
