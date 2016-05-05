@@ -117,7 +117,13 @@ module ClientAction = struct
     ; Crash
     ]
 
-  let all = [ Ignore ]
+let all =
+    [ Shutdown
+    ; Reboot
+    ; Suspend
+    ; Resume
+    ; Crash
+    ]
 
   let to_string = function
     | Shutdown  -> "Shutdown"
@@ -190,18 +196,6 @@ module Test = struct
 end
 
 
-(** create a JSON command that is passed to the Xen Test VM
- *  to control its behaviour
- *)
-let command ack action =
-    `Assoc
-    [ "when"    , `String "onshutdown"
-    ; "action"  , ClientAction.to_json action
-    ; "ack"     , AckRequest.to_json ack
-    ]
-    |> Y.to_string
-    
-
 (** [xs_write] writes a [value] to a Xen Store [path]. This
  * implementation uses SSH to do this.  *)
 let xs_write server path value =
@@ -209,13 +203,6 @@ let xs_write server path value =
   match S.ssh server cmd with
   | 0 , _      -> return ()
   | rc, stdout -> X.fail "command [%s] failed with %d" cmd rc
-
-(** [xs_testing] writes a value into "control/testing" in Xen Store for
- * [domid] on [server] *)
-let xs_testing server domid value =
-  xs_write 
-    server (sprintf "/local/domain/%Ld/control/testing" domid)
-    value
 
 
 (** find the named server in the inventory *)
@@ -290,6 +277,37 @@ let provision_vm rpc session (state: ClientState.t) =
     VM.suspend rpc session vm >>= fun () ->
     return vm
 
+(** create a JSON command that is passed to the Xen Test VM
+ *  to control its behaviour
+ *)
+let command ack action =
+    `Assoc
+    [ "when"    , `String "onshutdown"
+    ; "action"  , ClientAction.to_json action
+    ; "ack"     , AckRequest.to_json ack
+    ]
+    |> Y.to_string
+    
+(** [xs_testing] writes a value into "control/testing" in Xen Store for
+ * [domid] on [server] *)
+let xs_testing server domid value =
+  xs_write 
+    server (sprintf "/local/domain/%Ld/control/testing" domid)
+    value
+
+(* prepare the VM for the next test. This includes how the VM
+ * acknowledges the next request and how it reacts to it. This is
+ * communicted to the VM via Xen Store. The VM picks this up but we need
+ * to wait 2 secs to make sure it does *)
+let prepare_vm server domid (config: Test.t) =
+  let json = command config.Test.ack config.Test.action in
+  if domid < 0L then 
+    log "can't prepare VM because domid=%Ld" domid
+  else
+    xs_testing server domid json >>= fun () ->
+    log "VM primed" >>= fun () ->
+    sleep 2.0
+
 (** [trying f] ignores execptions from the API *)
 let trying f = Lwt.catch f 
   (function 
@@ -309,8 +327,7 @@ let exec server rpc session (config: Test.t) =
         log "VM domid is %Ld" domid >>= fun () ->
         XenState.observe rpc session vm >>= fun ps ->
         log "VM power state is %s" ps >>= fun () ->
-        sleep 1.0 >>= fun () ->
-        (* prime the VM *)
+        prepare_vm server domid config >>= fun () ->
         ( match config.Test.request with
         | HostRequest.Shutdown ->
           VM.clean_shutdown rpc session vm >>= fun () ->
@@ -354,7 +371,8 @@ let exec server rpc session (config: Test.t) =
 
 (** [test] runs all test cases that we have *)
 let test server rpc session =
-    Lwt_list.iter_s (exec server rpc session) Test.all
+  log "running %d tests" (List.length Test.all) >>= fun () -> 
+  Lwt_list.iter_s (exec server rpc session) Test.all
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
