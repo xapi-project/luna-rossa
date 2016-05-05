@@ -52,6 +52,14 @@ module CMD = struct
           & opt file "etc/tests.json"
           & info ["c"; "config"] ~docv:"tests.json" ~doc)
 
+  (** option --suite *)
+  let suite =
+    let doc = "Name of test suite" in
+      C.Arg.(value
+          & opt string "all"
+          & info ["t"; "suite"] ~docv:"suite" ~doc)
+
+
   (** topic for help *)
   let topic =
     let doc = "Help topic" in
@@ -112,7 +120,7 @@ module CMD = struct
       ; `P "Report bug on the github issue tracker" 
       ] 
     in
-      ( C.Term.(const Powercycle.main $ servers $ config)
+      ( C.Term.(const Powercycle.main $ servers $ config $ suite)
       , C.Term.info "powercycle" ~version:"1.0" ~doc ~man
       )
 

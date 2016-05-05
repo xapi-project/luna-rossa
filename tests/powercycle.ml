@@ -193,6 +193,15 @@ module Test = struct
           ; ack = ack
           ; action = action
           })
+
+
+  let interesting =
+    [ { vm      = ClientState.Running
+      ; request = HostRequest.Suspend
+      ; ack     = AckRequest.Ok
+      ; action  = ClientAction.Shutdown
+      }
+    ]
 end
 
 
@@ -370,9 +379,9 @@ let exec server rpc session (config: Test.t) =
       | e -> Lwt.fail(e))
 
 (** [test] runs all test cases that we have *)
-let test server rpc session =
+let test server tests rpc session =
   log "running %d tests" (List.length Test.all) >>= fun () -> 
-  Lwt_list.iter_s (exec server rpc session) Test.all
+  Lwt_list.iter_s (exec server rpc session) tests
 
 (** [join_by_nl] turns a JSON array of strings into a string where
  * the input strings are joined by newlines. We use this
@@ -384,7 +393,7 @@ let join_by_nl json =
   |> String.concat "\n"
 
 (* [main] is the heart of this test *)
-let main servers_json config_json  = 
+let main servers_json config_json suite = 
   let servers   = S.read servers_json in
   let config    = C.read config_json "powercycle" in 
   let hostname  = config |> U.member "server" |> U.to_string in
@@ -392,11 +401,15 @@ let main servers_json config_json  =
   let api       = S.api server in
   let root      = S.root server in
   let setup_sh  = config |> U.member "server-setup.sh"   |> join_by_nl in
-  let cleanup_sh= config |> U.member "server-cleanup.sh" |> join_by_nl
+  let cleanup_sh= config |> U.member "server-cleanup.sh" |> join_by_nl in
+  let suite     = match suite with
+                  | "all"           -> Test.all
+                  | "interesting"   -> Test.interesting
+                  | s               -> error "unknown test suite %s" s
   in
     try
       ( ssh server setup_sh 
-      ; Lwt_main.run (X.with_session api root (test server))
+      ; Lwt_main.run (X.with_session api root (test server suite))
       ; ssh server cleanup_sh
       ; true
       )
