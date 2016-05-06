@@ -56,7 +56,7 @@ module CMD = struct
   let suite =
     let doc = "Name of test suite" in
       C.Arg.(value
-          & opt string "all"
+          & opt string "positive"
           & info ["t"; "suite"] ~docv:"suite" ~doc)
 
 
@@ -115,7 +115,9 @@ module CMD = struct
     let doc = "start a Mirage VM and powercycle it" in
     let man = 
       [ `S "DESCRIPTION"
-      ; `P "Start a VM and go through a powercycle with it."
+      ; `P "Start a VM and go through a powercycle with it. By default
+            only positive test cases are tested. See option -t
+            for selecting a different set. "
       ; `S "BUGS"
       ; `P "Report bug on the github issue tracker" 
       ] 

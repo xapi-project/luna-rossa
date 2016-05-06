@@ -48,23 +48,32 @@ end
 
 (** what XenServer requests from the client *)
 module HostRequest = struct
+  type paused = Paused | Running
+  type clean  = Clean  | Hard
   type t =
-    | Shutdown
-    | Reboot
+    | Shutdown of clean
+    | Reboot  
     | Suspend
-    | Resume
+    | ResumeTo of paused 
+    | Unpause
 
   let to_string = function
-    | Shutdown  -> "Shutdown"
-    | Reboot    -> "Reboot"
-    | Suspend   -> "Suspend"
-    | Resume    -> "Resume"
+    | Shutdown(Clean)     -> "Shutdown(clean)"
+    | Shutdown(Hard)      -> "Shutdown(hard)"
+    | Reboot              -> "Reboot"
+    | Suspend             -> "Suspend"
+    | ResumeTo(Paused)    -> "Resume(Paused)"
+    | ResumeTo(Running)   -> "Resume(Running)"
+    | Unpause             -> "Unpause"
 
   let all = 
-    [ Shutdown
+    [ Shutdown(Clean)
+    ; Shutdown(Hard)
     ; Reboot
     ; Suspend
-    ; Resume
+    ; ResumeTo(Paused)
+    ; ResumeTo(Running)
+    ; Unpause
     ]
 end
 
@@ -194,6 +203,42 @@ module Test = struct
           ; action = action
           })
 
+  (** [is_legal] is true for all combinations of VM state and
+   *  requests that never lead to a VM_BAD_POWER_STATE exception
+   *)
+  let is_legal state request =
+    let module C = ClientState in
+    let module H = HostRequest in
+    match state, request with
+    | C.Running   , H.Suspend             -> true
+    | C.Running   , H.Shutdown(_)         -> true
+    | C.Paused    , H.Unpause             -> true
+    (* unclear
+    | C.Paused    , H.Shutdown(H.Hard)    -> true
+    *)
+    | C.Suspended , H.ResumeTo(H.Running) -> true
+    | _           , _                     -> false
+
+  let is_matching request reaction =
+    let module R = HostRequest  in
+    let module A = ClientAction in
+    match request, reaction with
+    | R.Shutdown(_) , A.Shutdown  -> true
+    | R.Reboot      , A.Reboot    -> true
+    | R.Suspend     , A.Suspend   -> true
+    | R.ResumeTo(_) , A.Resume    -> true
+    | _             , _           -> false
+
+  (** [is_positive t] is true if test case [t] exercises 
+   *  a scenario in that we expect to see errors reported
+   *  by the API *)
+  let is_positive t =
+        t.ack = AckRequest.Ok
+    &&  is_legal t.vm t.request
+    &&  is_matching t.request t.action
+
+
+  let positive = List.filter is_positive all
 
   let interesting =
     [ { vm      = ClientState.Running
@@ -320,6 +365,7 @@ let trying f = Lwt.catch f
 
 (** [exec] executes a single test *)
 let exec server rpc session (config: Test.t) = 
+  log "" >>= fun () ->
   log "## testing %s" (Test.to_string config) >>= fun () ->
   provision_vm rpc session config.Test.vm >>= fun vm ->
     Lwt.catch 
@@ -330,9 +376,14 @@ let exec server rpc session (config: Test.t) =
         log "VM power state is %s" ps >>= fun () ->
         prepare_vm server domid config >>= fun () ->
         ( match config.Test.request with
-        | HostRequest.Shutdown ->
+        | HostRequest.Shutdown(HostRequest.Clean) ->
           VM.clean_shutdown rpc session vm >>= fun () ->
-          log "VM shutdown" >>= fun () ->
+          log "VM cleanly shutdown" >>= fun () ->
+          return ()
+        
+        | HostRequest.Shutdown(HostRequest.Hard) ->
+          VM.clean_shutdown rpc session vm >>= fun () ->
+          log "VM forcefully shutdown" >>= fun () ->
           return ()
 
         | HostRequest.Reboot   ->
@@ -345,9 +396,19 @@ let exec server rpc session (config: Test.t) =
           log "VM suspended" >>= fun () ->
           return ()
 
-        | HostRequest.Resume   ->
+        | HostRequest.ResumeTo(HostRequest.Running)   ->
+          VM.resume rpc session vm false true >>= fun () ->
+          log "VM resumed to running" >>= fun () ->
+          return ()
+
+       | HostRequest.ResumeTo(HostRequest.Paused)   ->
           VM.resume rpc session vm true true >>= fun () ->
-          log "VM resumed" >>= fun () ->
+          log "VM resumed to paused" >>= fun () ->
+          return ()
+
+       | HostRequest.Unpause ->
+          VM.unpause rpc session vm >>= fun () ->
+          log "VM unpaused" >>= fun () ->
           return ()
         
         ) >>= fun () ->
@@ -355,8 +416,11 @@ let exec server rpc session (config: Test.t) =
         log "VM domid is %Ld" domid >>= fun () ->
         XenState.observe rpc session vm >>= fun ps ->
         log "VM power state is %s" ps >>= fun () ->
-        VM.clean_shutdown rpc session vm >>= fun () ->
-        log "VM shut down" >>= fun () ->
+        ( match ps with
+        | "Running" ->  VM.clean_shutdown rpc session vm >>= fun () ->
+                        log "VM shut down cleanly"
+        | _         ->  return ()
+        ) >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
         Lwt.return ())
@@ -404,6 +468,7 @@ let main servers_json config_json suite =
   let suite     = match suite with
                   | "all"           -> Test.all
                   | "interesting"   -> Test.interesting
+                  | "positive"      -> Test.positive
                   | s               -> error "unknown test suite %s" s
   in
     try
