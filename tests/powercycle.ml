@@ -215,6 +215,8 @@ module Test = struct
     | C.Paused    , H.Unpause             -> true
     | C.Paused    , H.Shutdown(H.Hard)    -> true
     | C.Suspended , H.ResumeTo(H.Running) -> true
+    | C.Suspended , H.ResumeTo(H.Paused)  -> true (* not sure *)
+    | C.Suspended , H.Shutdown(H.Hard)    -> true
     | _           , _                     -> false
 
   let is_matching request reaction =
