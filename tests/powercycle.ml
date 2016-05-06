@@ -213,9 +213,7 @@ module Test = struct
     | C.Running   , H.Suspend             -> true
     | C.Running   , H.Shutdown(_)         -> true
     | C.Paused    , H.Unpause             -> true
-    (* unclear
     | C.Paused    , H.Shutdown(H.Hard)    -> true
-    *)
     | C.Suspended , H.ResumeTo(H.Running) -> true
     | _           , _                     -> false
 
@@ -239,10 +237,16 @@ module Test = struct
 
 
   let positive = List.filter is_positive all
+  let negative = List.filter (fun t -> not @@ is_positive t) all
 
   let interesting =
     [ { vm      = ClientState.Running
       ; request = HostRequest.Suspend
+      ; ack     = AckRequest.Ok
+      ; action  = ClientAction.Shutdown
+      }
+    ; { vm      = ClientState.Paused
+      ; request = HostRequest.Shutdown(HostRequest.Hard)
       ; ack     = AckRequest.Ok
       ; action  = ClientAction.Shutdown
       }
@@ -382,7 +386,7 @@ let exec server rpc session (config: Test.t) =
           return ()
         
         | HostRequest.Shutdown(HostRequest.Hard) ->
-          VM.clean_shutdown rpc session vm >>= fun () ->
+          VM.hard_shutdown rpc session vm >>= fun () ->
           log "VM forcefully shutdown" >>= fun () ->
           return ()
 
@@ -469,6 +473,7 @@ let main servers_json config_json suite =
                   | "all"           -> Test.all
                   | "interesting"   -> Test.interesting
                   | "positive"      -> Test.positive
+                  | "negative"      -> Test.negative
                   | s               -> error "unknown test suite %s" s
   in
     try
