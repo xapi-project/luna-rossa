@@ -423,9 +423,8 @@ let exec server rpc session (config: Test.t) =
         XenState.observe rpc session vm >>= fun ps ->
         log "VM power state is %s" ps >>= fun () ->
         ( match ps with
-        | "Running" ->  VM.clean_shutdown rpc session vm >>= fun () ->
-                        log "VM shut down cleanly"
-        | _         ->  return ()
+        | "Halted"  -> return ()
+        | _         ->  VM.hard_shutdown rpc session vm
         ) >>= fun () ->
         VM.destroy rpc session vm >>= fun () ->
         log "VM destroyed" >>= fun () ->
