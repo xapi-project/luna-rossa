@@ -35,6 +35,7 @@ Library "librossa"
     Rossa_xen,
     Rossa_config
   BuildDepends:   
+    bisect_ppx,
     xen-api-client.lwt,
     yojson
 
@@ -43,7 +44,9 @@ Executable "lunarossa"
   MainIs: lunarossa.ml
   CompiledObject: native
   BuildDepends:
+    bisect_ppx,
     cmdliner,
     librossa
+
 
 
