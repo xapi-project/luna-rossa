@@ -73,7 +73,7 @@ module HostRequest = struct
     ; Suspend
     ; ResumeTo(Paused)
     ; ResumeTo(Running)
-    ; Unpause
+    ; Unpause  (* not sure - does not require VM action *)
     ]
 end
 
@@ -227,6 +227,7 @@ module Test = struct
     | R.Reboot      , A.Reboot    -> true
     | R.Suspend     , A.Suspend   -> true
     | R.ResumeTo(_) , A.Resume    -> true
+ (* | R.Unpause     , _           -> true *)
     | _             , _           -> false
 
   (** [is_positive t] is true if test case [t] exercises 

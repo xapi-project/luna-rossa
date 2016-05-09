@@ -54,9 +54,12 @@ module CMD = struct
 
   (** option --suite *)
   let suite =
+    let id    = List.map (fun x -> (x, x)) in
+    let suite = C.Arg.enum 
+      (id ["all"; "positive"; "negative"; "interesting"]) in
     let doc = "Name of test suite" in
       C.Arg.(value
-          & opt string "positive"
+          & opt suite "positive"
           & info ["t"; "suite"] ~docv:"suite" ~doc)
 
 
