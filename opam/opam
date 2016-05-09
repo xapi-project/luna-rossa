@@ -20,4 +20,5 @@ depends: [
 	"cmdliner"
   "xen-api-client" 
   "yojson"
+  "bisect_ppx"
 ]
