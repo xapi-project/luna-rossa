@@ -24,8 +24,8 @@
       "server": "host1",
       "server-setup.sh": [
         "set -e",
-        "GH=\"https://github.com/xapi-project\"",
-        "VM=\"$GH/xen-test-vm/releases/download/0.0.5/test-vm.xen.gz\"",
+        "GH=\"https://github.com/lindig\"",
+        "VM=\"$GH/xen-test-vm/releases/download/0.1.4/test-vm.xen.gz\"",
         "cd /boot/guest",
         "curl --fail -s -L \"$VM\" > powercycle.xen.gz"
       ],
