@@ -31,11 +31,13 @@ Plugins: META (0.4), DevFiles (0.4)
 
 Library "profiling"
   Path: profiling
+  Install: false
   Modules: 
     Coverage
 
 Library "librossa"
   Path: lib/
+  Install: false
   Modules: 
     Rossa_util,
     Rossa_server,
