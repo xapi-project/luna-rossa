@@ -155,6 +155,7 @@ module CMD = struct
 end
 
 let () = 
+  Coverage.init "lunarossa";
   match C.Term.eval_choice CMD.lunarossa CMD.cmds with 
   | `Ok(true)   -> exit 0 (* all tests passed *)
   | `Ok(false)  -> exit 1 (* some test failed *)

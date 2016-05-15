@@ -1,3 +1,5 @@
+# vim: ts=2 sw=2 et:
+
 Name: luna-rossa
 Version: 0.0.1
 Synopsis: A suite of tests for testing Xen Server
@@ -27,6 +29,11 @@ OASISFormat: 0.4
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
 
+Library "profiling"
+  Path: profiling
+  Modules: 
+    Coverage
+
 Library "librossa"
   Path: lib/
   Modules: 
@@ -35,7 +42,6 @@ Library "librossa"
     Rossa_xen,
     Rossa_config
   BuildDepends:   
-    bisect_ppx,
     xen-api-client.lwt,
     yojson
 
@@ -44,9 +50,9 @@ Executable "lunarossa"
   MainIs: lunarossa.ml
   CompiledObject: native
   BuildDepends:
-    bisect_ppx,
     cmdliner,
-    librossa
+    librossa,
+    profiling
 
 
 

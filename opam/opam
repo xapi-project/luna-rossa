@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "luna-rossa"
-version: "0.2"
+version: "0.3"
 maintainer: "Christian Lindig <christian.lindig@citrix.com>"
 authors: "Christian Lindig <christian.lindig@citrix.com>"
 homepage: "https://github.com/lindig/luna-rossa"
@@ -17,7 +17,7 @@ remove: ["ocamlfind" "remove" "librossa"]
 depends: [
   "ocamlfind" {build}
   "oasis" {build & >= "0.4"}
-	"cmdliner"
+  "cmdliner"
   "xen-api-client" 
   "yojson"
   "bisect_ppx"
