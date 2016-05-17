@@ -1,3 +1,26 @@
+#
+# This header creates a _tags file suitable for coverage analysis
+# with bisect_ppx.
+# 
+# make coverage 
+# prepares for building with coverage analysis
+#
+# make uncover
+# reverses the setup from "make coverage"
+#
+
+# the default target when Make is called with no argument
+default: build
+
+coverage: _tags _tags.coverage 
+	test ! -f _tags.orig && mv _tags _tags.orig || true
+	cat _tags.coverage _tags.orig > _tags
+
+uncover: _tags.orig
+	mv _tags.orig _tags
+
+.PHONY: default coverage uncover
+	
 # OASIS_START
 # DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
 

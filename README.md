@@ -51,6 +51,8 @@ This installs the `lunarossa` binary and the `librossa` library package
 that becomes available for other code to use.  You can also look at the
 file `opam/opam` to see how to build Luna Rossa manually.
 
+See also [COVERAGE.md](./COVERAGE.md) for code coverage analysis.
+
 # Running Tests
 
 All tests are invoked as sub-commands from the `lunarossa` binary.  Each
