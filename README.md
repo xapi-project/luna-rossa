@@ -32,12 +32,6 @@ its environment explicit.
 * Luna Rosa tries to make configurations for tests explicit by reading
   them from a JSON file `tests.json`. See the `etc/` directory.
 
----
-
-_This is work in progress_
-
----
-
 # Building and Installing
 
 Luna Rossa is implemented in OCaml. OCaml's package manager Opam is
