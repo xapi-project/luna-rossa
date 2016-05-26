@@ -3,17 +3,17 @@ name: "luna-rossa"
 version: "0.3"
 maintainer: "Christian Lindig <christian.lindig@citrix.com>"
 authors: "Christian Lindig <christian.lindig@citrix.com>"
-homepage: "https://github.com/lindig/luna-rossa"
-bug-reports: "https://github.com/lindig/luna-rossa"
+homepage: "https://github.com/xapi-project/luna-rossa"
+bug-reports: "https://github.com/xapi-project/luna-rossa"
 license: "MIT"
-dev-repo: "https://github.com/lindig/luna-rossa"
+dev-repo: "https://github.com/xapi-project/luna-rossa"
 build: [
   ["oasis" "setup" "-setup-update" "dynamic"]
   ["./configure" "--prefix" prefix]
   [make]
 ]
 install: [make "install"]
-remove: ["ocamlfind" "remove" "librossa"]
+remove: ["ocamlfind" "remove" "luna-rossa"]
 depends: [
   "ocamlfind" {build}
   "oasis" {build & >= "0.4"}

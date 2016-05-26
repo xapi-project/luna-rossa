@@ -1,6 +1,6 @@
 <!-- vim: set ts=4 sw=4 et: -->
 
-[![Build Status](https://travis-ci.org/lindig/luna-rossa.svg?branch=master)](https://travis-ci.org/lindig/luna-rossa)
+[![Build Status](https://travis-ci.org/xapi-project/luna-rossa.svg?branch=master)](https://travis-ci.org/xapi-project/luna-rossa)
 
 # Luna Rossa - Testing Xen Server
 
@@ -39,7 +39,7 @@ essential for building Luna Rossa. Luna Rossa hasn't been released as an
 offical Opam package but it is easy to install it by pinning the source
 code repository:
 
-    opam pin add luna-rossa https://github.com/lindig/luna-rossa.git
+    opam pin add luna-rossa https://github.com/xapi-project/luna-rossa.git
 
 This installs the `lunarossa` binary and the `librossa` library package
 that becomes available for other code to use.  You can also look at the
